@@ -1,0 +1,10 @@
+.cquery_cache/
+.vscode/ipch
+include/glm
+wrengame
+*.o
+*.a
+*.bc
+
+## Build generated
+build/

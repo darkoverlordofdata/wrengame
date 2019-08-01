@@ -1,0 +1,39 @@
+{
+  "!": "doran package manager v0.0.5",
+  "name": "wrengame",
+  "template": "c",
+  "version": "0.0.1",
+  "vala": "0.26",
+  "c": "11",
+  "cpp": "17",
+  "authors": [
+    "darkoverlordofdata"
+  ],
+  "description": "wrengame",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {},
+  "source": "src",
+  "files": [
+    "src/main.c"
+  ],
+  "packages": [],
+  "includes": [
+    "./include",
+    "/usr/include"
+  ],
+  "libraries": [
+    "m",
+    "SDL2",
+    "wren"
+  ],
+  "options": {
+    "VERSION": "0.0.1",
+    "RELEASE_NAME": "wrengame"
+  },
+  "definitions": [],
+  "symbols": [],
+  "copy": "..",
+  "vapidir": "/src/vapis",
+  "console": false
+}

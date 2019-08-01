@@ -1,0 +1,6 @@
+#!/bin/bash
+#
+#   param   $1      ${workspaceFolder}
+#
+# test ! -d $1/include/glm && ln -s /usr/include/glm $1/include/glm
+exit 0
