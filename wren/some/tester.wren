@@ -1,5 +1,6 @@
 // tester.wren
-import "lib/io" for File
+import "lib/io/stream" for Stream
+import "lib/io/file" for File
 
 System.print("This is tester.wren")
 

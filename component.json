@@ -15,7 +15,8 @@
   "dependencies": {},
   "source": "src",
   "files": [
-    "src/main.c"
+    "src/main.c",
+    "src/path.c"
   ],
   "packages": [],
   "includes": [
@@ -24,8 +25,13 @@
   ],
   "libraries": [
     "m",
+    "wren",
     "SDL2",
-    "wren"
+    "SDL2_image",
+    "SDL2_mixer",
+    "SDL2_ttf",
+    "GLEW",
+    "GL"
   ],
   "options": {
     "VERSION": "0.0.1",

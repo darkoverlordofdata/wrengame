@@ -6,6 +6,7 @@
             "command": "emcc",
             "args": [
                 "src/main.c",
+                "src/path.c",
                 "lib/libwren.bc",
                 "-std=c11",
                 "-I./include",

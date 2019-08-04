@@ -1,6 +1,7 @@
 // main.wren
 import "some/tester" for Tester
-import "lib/io" for File
+import "lib/io/stream" for Stream
+import "lib/io/file" for File
 import "lib/sdl" for Sdl, Window
 
 
@@ -10,9 +11,21 @@ class Main {
     construct new() {}
     main() { 
 	    System.print("Hello world")
-        var file = File.Create("wren/some/path.txt") 
+        var file = Stream.Create("wren/some/path.txt") 
         file.Write("some text") 
         file.Close()
+
+        var other = Stream.Create("wren/some/other.txt")
+        var t = other.Read()
+        other.Close()
+        System.print("======================================\n")
+        System.print(t)
+        System.print("======================================\n")
+
+        this.Test1()
+        this.Test2()
+        this.Test3()
+        this.Test4()
 
         // Sdl.Init(Sdl.INIT_VIDEO) // | Sdl.INIT_EVENTS | Sdl.INIT_TIMER | Sdl.INIT_AUDIO)
         // var window = Window.Create("SDL Demo", Window.WINDOWPOS_CENTERED, Window.WINDOWPOS_CENTERED,
@@ -28,9 +41,63 @@ class Main {
         // Sdl.Quit()
         
     }
+
+    Test1() {
+        var fiber = Fiber.new { 
+            System.print("It's alive!") 
+        }
+
+        System.print(fiber.isDone) // false
+        fiber.call() // It's alive!
+        System.print(fiber.isDone) // true
+
+    }
+    Test2() {
+        var fiber = Fiber.new { 
+            System.print("Before yield") 
+            Fiber.yield() 
+            System.print("Resumed") 
+        }
+
+        System.print("Before call") //Before call
+        fiber.call() //Before yield
+        System.print("Calling again") //Calling again
+        fiber.call() //Resumed
+        System.print("All done") //All Done
+
+    }
+    Test3() {
+        var fiber = Fiber.new {|param| 
+            System.print(param) 
+            var result = Fiber.yield() 
+            System.print(result) 
+        }
+
+        fiber.call("First") //First
+        fiber.call("Second") //Second
+    }
+    Test4() {
+        var fiber = Fiber.new { 
+            (1..10).each {|i| 
+                Fiber.yield(i) 
+            } 
+        }
+        System.print(fiber.call())
+        System.print(fiber.call())
+        System.print(fiber.call())
+        System.print(fiber.call())
+        System.print(fiber.call())
+        System.print(fiber.call())
+        System.print(fiber.call())
+        System.print(fiber.call())
+        System.print(fiber.call())
+        System.print(fiber.call())
+        System.print(fiber.call())
+    }
 }
 // tester.wren
-import "lib/io" for File
+import "lib/io/stream" for Stream
+import "lib/io/file" for File
 
 System.print("This is tester.wren")
 
@@ -40,12 +107,8 @@ class Tester {
     	System.print("Hello tester")
     }
 }
-some textforeign class File { 
-    construct Create(path) {}
-
-    foreign Write(text) 
-    foreign Close() 
-}foreign class Sdl { 
+some textsome other text
+foreign class Sdl { 
 
     static INIT_TIMER          { 0x00000001 }
     static INIT_AUDIO          { 0x00000010 }
@@ -92,4 +155,82 @@ foreign class Window {
     construct Create(title, x, y, w, h, flags) {}
     foreign Close()
 
+}foreign class Stream { 
+    construct Create(path) {}
+
+    foreign Write(text) 
+    foreign Close() 
+    foreign Read()
 }
+class File {
+    /**
+     * The system-dependent path-separator character.
+     * On UNIX systems the value of this
+     * field is <code>'/'</code>; on Microsoft Windows systems it is <code>'\\'</code>.
+     *
+     */
+    static PathSeparator { "/" }
+    /**
+     * Returns the length of this abstract pathname's prefix.
+     * For use by FileSystem classes.
+     */
+    PrefixLength { _prefixLength }
+
+    
+    /**
+     * Returns the name of the file or directory denoted by this abstract
+     * pathname.  This is just the last name in the pathname's name
+     * sequence.  If the pathname's name sequence is empty, then the empty
+     * string is returned.
+     *
+     */
+    Name { _name }
+    /**
+     * Returns the pathname string of this abstract pathname's parent, or
+     * <code>null</code> if this pathname does not name a parent directory.
+     *
+     */
+    Parent { parent }
+    /**
+     * Converts this abstract pathname into a pathname string.  The resulting
+     * string uses the {@link #separator default name-separator character} to
+     * separate the names in the name sequence.
+     *
+     */
+    Path { _path }
+    /**
+     * Tests whether the file or directory denoted by this abstract pathname
+     * exists.
+     *
+     */
+    construct Create(path) {
+        _path = path
+    }
+
+    construct Create(parent, child) {
+        _path = parent + "/" + child
+    }
+
+
+    Exists() {
+
+    }
+    /**
+     * Tests whether the file denoted by this abstract pathname is a
+     * directory.
+     */
+    IsDirectory() {
+
+    }
+    /**
+     * Tests whether the file denoted by this abstract pathname is a normal
+     * file.  A file is <em>normal</em> if it is not a directory and, in
+     * addition, satisfies other system-dependent criteria.  Any non-directory
+     * file created by a Java application is guaranteed to be a normal file.
+     *
+     */
+    IsFile() {
+
+    }
+ }
+

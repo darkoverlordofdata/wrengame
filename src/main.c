@@ -18,6 +18,7 @@ int main(int argc, const char* argv[])
     // int w = 640;
     // Uint32 flags = SDL_WINDOW_SHOWN;
     // SDL_Window* window = SDL_CreateWindow(title, x, y, w, h, flags);
+
     // SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     // while (true)
     // {
@@ -37,7 +38,7 @@ int main(int argc, const char* argv[])
     // printf("window - %s\n", SDL_GetError());
     // SDL_Quit();
     // return 0;
- 
+
     WrenConfiguration config;
     wrenInitConfiguration(&config);
     config.loadModuleFn         = wren_LoadModule;
