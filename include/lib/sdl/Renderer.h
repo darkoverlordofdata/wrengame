@@ -15,7 +15,6 @@ static inline void sdl_renderer_Allocate(WrenVM* vm)
     const Uint32 flags = wrenGetSlotDouble(vm, 3);
     *renderer  = SDL_CreateRenderer(*window, index, flags);
 
-
 }
 /**
  *  sdl/renderer::Finalize

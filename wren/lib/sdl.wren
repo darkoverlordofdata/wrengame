@@ -9,6 +9,7 @@ foreign class Sdl {
     static INIT_EVENTS         { 0x00004000 }
     static INIT_SENSOR         { 0x00008000 }
 
+    static RENDERER_ACCELERATED { 0x00000002 }
     foreign static Init(flags) 
     foreign static Delay(ms)
     foreign static Quit()
