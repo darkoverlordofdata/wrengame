@@ -1,5 +1,5 @@
 foreign class Stream { 
-    construct Create(path) {}
+    construct new(path) {}
 
     foreign Write(text) 
     foreign Close() 

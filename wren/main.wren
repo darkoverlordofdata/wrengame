@@ -14,11 +14,11 @@ class Main {
     construct new() {}
     main() { 
 	    System.print("Hello world")
-        var file = Stream.Create("wren/some/path.txt") 
+        var file = Stream.new("wren/some/path.txt") 
         file.Write("some text") 
         file.Close()
 
-        var other = Stream.Create("wren/some/other.txt")
+        var other = Stream.new("wren/some/other.txt")
         var t = other.Read()
         other.Close()
         System.print("======================================\n")
@@ -36,16 +36,17 @@ class Main {
         System.print("======================================\n")
 
 
-        Sdl.Init(Sdl.INIT_VIDEO) // | Sdl.INIT_EVENTS | Sdl.INIT_TIMER | Sdl.INIT_AUDIO)
-        var window = Window.Create("SDL Demo", Window.WINDOWPOS_CENTERED, Window.WINDOWPOS_CENTERED,
+        Sdl.Init(Sdl.INIT_VIDEO | Sdl.INIT_EVENTS | Sdl.INIT_TIMER | Sdl.INIT_AUDIO)
+
+        var window = Window.new("SDL Demo", Window.WINDOWPOS_CENTERED, Window.WINDOWPOS_CENTERED,
                                         640, 480, Window.WINDOW_SHOWN)
-        var renderer = Renderer.Create(window, -1, Sdl.RENDERER_ACCELERATED)
+        var renderer = Renderer.new(window, -1, Sdl.RENDERER_ACCELERATED)
         for (i in 1...1000) {
             renderer.DrawColor(100, 149, 237, 255)
             renderer.Clear()
             renderer.Present()
         }
-        // renderer.Close()
+        renderer.Close()
         window.Close()
         Sdl.Quit()
         

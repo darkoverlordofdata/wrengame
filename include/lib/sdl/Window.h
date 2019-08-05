@@ -29,7 +29,9 @@ static inline void sdl_window_Allocate(WrenVM* vm)
 static inline void sdl_window_Finalize(void* data) 
 { 
     SDL_Window** window = data;
-    SDL_DestroyWindow((SDL_Window**) *window);
+    if (*window != nullptr) {
+        SDL_DestroyWindow((SDL_Window**) *window);
+    }
 }
 
 /**
@@ -40,5 +42,6 @@ static inline void sdl_window_Close(WrenVM* vm)
 { 
     SDL_Window** window = (SDL_Window**)wrenGetSlotForeign(vm, 0); 
     SDL_DestroyWindow((SDL_Window*) window);
+    *window = nullptr;
 }
 

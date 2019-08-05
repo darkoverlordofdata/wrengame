@@ -23,7 +23,9 @@ static inline void sdl_renderer_Allocate(WrenVM* vm)
 static inline void sdl_renderer_Finalize(void* data) 
 {
     SDL_Renderer** renderer = data;
-    SDL_DestroyRenderer(*renderer);
+    if (*renderer != nullptr) {
+        SDL_DestroyRenderer(*renderer);
+    }
 }
 
 static inline void sdl_renderer_DrawColor(WrenVM* vm)
@@ -48,6 +50,18 @@ static inline void sdl_renderer_Present(WrenVM* vm)
     SDL_Renderer** renderer = (SDL_Renderer**)wrenGetSlotForeign(vm, 0); 
     SDL_RenderPresent(*renderer);
 }
+
+/**
+ *  io/renderer::Close
+ * 
+ */
+static inline void sdl_renderer_Close(WrenVM* vm) 
+{ 
+    SDL_Renderer** renderer = (SDL_Renderer**)wrenGetSlotForeign(vm, 0); 
+    SDL_DestroyRenderer(*renderer);
+    *renderer = nullptr;
+}
+
 
 
 

@@ -27,7 +27,7 @@ foreign class Window {
     static WINDOW_POPUP_MENU    { 0x00080000 }      /**< window should be treated as a popup menu */
     static WINDOW_VULKAN        { 0x10000000 }      /**< window usable for Vulkan surface */
 
-    construct Create(title, x, y, w, h, flags) {}
+    construct new(title, x, y, w, h, flags) {}
     foreign Close()
 
 }

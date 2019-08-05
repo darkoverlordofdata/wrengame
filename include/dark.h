@@ -71,3 +71,23 @@ SOFTWARE.
     (_a > _b) ? _a : _b;                                                \
 })
 
+/**
+ * Bind Wren Script api to native functions
+ */
+typedef struct Method
+{
+    char* name;
+    void* addr;
+
+} Method;
+
+typedef struct Class 
+{
+    char* module;
+    char* className;
+    void* allocate;
+    void* finalize;
+    Method methods[100];
+
+} Class;
+
