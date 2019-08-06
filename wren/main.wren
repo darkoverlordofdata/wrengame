@@ -28,27 +28,28 @@ class Main {
         var path = Path.new(Path.Cwd)
 
         System.print(Path.Cwd)
-        System.print(path.ToString())
+        var cwd = path.ToString()
+        System.print(cwd)
         System.print("Absolute %(Path.Absolute)")
         System.print("Relative %(Path.Relative)")
         System.print("Simple %(Path.Simple)")
-        System.print("Type = %(path.Type())")
+        System.print("Type = %(Path.Type(cwd))")
         System.print("======================================\n")
 
 
-        Sdl.Init(Sdl.INIT_VIDEO | Sdl.INIT_EVENTS | Sdl.INIT_TIMER | Sdl.INIT_AUDIO)
+        Sdl.Init(Sdl.INIT_VIDEO)// | Sdl.INIT_EVENTS | Sdl.INIT_TIMER | Sdl.INIT_AUDIO)
 
         var window = Window.new("SDL Demo", Window.WINDOWPOS_CENTERED, Window.WINDOWPOS_CENTERED,
                                         640, 480, Window.WINDOW_SHOWN)
         var renderer = Renderer.new(window, -1, Sdl.RENDERER_ACCELERATED)
-        for (i in 1...1000) {
+        // for (i in 1...1000) {
             renderer.DrawColor(100, 149, 237, 255)
             renderer.Clear()
             renderer.Present()
-        }
-        renderer.Close()
-        window.Close()
-        Sdl.Quit()
+        // }
+        // renderer.Close()
+        // window.Close()
+        // Sdl.Quit()
         
     }
 

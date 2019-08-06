@@ -8,7 +8,6 @@
 #define GetCwd _getcwd
 #define PATH_MAX MAX_PATH
 #else
-// #include <linux/limits.h>
 #define PATH_MAX 4096
 #define GetCwd getcwd
 #endif
@@ -30,8 +29,8 @@ static inline void io_path_Allocate(WrenVM* vm)
  */
 static inline void io_path_Finalize(void* data) 
 { 
-    Path** path = data;
-    pathFree((Path**) *path);
+    Path** path = (Path**)data;
+    pathFree(*path);
 }
 
 static inline void io_path_Absolute(WrenVM* vm)
@@ -66,8 +65,8 @@ static inline void io_path_Cwd(WrenVM* vm)
  */
 static inline void io_path_Type(WrenVM* vm) 
 { 
-    Path** path = (Path**)wrenGetSlotForeign(vm, 0);
-    wrenSetSlotDouble(vm, 0, pathType(*path));
+    const char* path = wrenGetSlotString(vm, 1); 
+    wrenSetSlotDouble(vm, 0, pathType(path));
 }
 /**
  *  io/path::DirName
@@ -112,7 +111,7 @@ static inline void io_path_AppendChar(WrenVM* vm)
 {
     Path** path = (Path**)wrenGetSlotForeign(vm, 0);
     const char* value = wrenGetSlotString(vm, 1); 
-    pathAppendChar(*path, value);
+    pathAppendChar(*path, value[0]);
 }
 
 /**

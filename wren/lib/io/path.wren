@@ -15,7 +15,7 @@ foreign class Path {
     foreign static Cwd 
 
     // Categorizes what form a path is.
-    foreign Type()
+    foreign static Type(string)
 
     // Strips off the last component of the path name.
     foreign DirName()

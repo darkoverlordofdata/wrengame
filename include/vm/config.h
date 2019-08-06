@@ -87,12 +87,12 @@ wren_BindForeignClass( WrenVM* vm,
                         const char* module, 
                         const char* className) 
 {
-
     WrenForeignClassMethods methods;
     methods.allocate = nullptr; 
     methods.finalize = nullptr;
 
-    Class* meta = &metadata;
+    Class* meta = GetMetaData();
+
     for (int i=0; meta[i].module != nullptr; i++) {
         if (strcmp(module, meta[i].module) != 0) continue;
         if (strcmp(className, meta[i].className) != 0) continue;
@@ -114,19 +114,16 @@ wren_BindForeignMethod( WrenVM* vm,
                         bool isStatic, 
                         const char* signature) 
 {
+    Class* meta = GetMetaData();
 
-    // printf("WrenForeignMethodFn %s::%s::%s - %x\n", module, className, signature, isStatic);
-    Class* meta = &metadata;
     for (int i=0; meta[i].module != nullptr; i++) {
         if (strcmp(module, meta[i].module) != 0) continue;
         if (strcmp(className, meta[i].className) != 0) continue;
-        // printf("Class %s::%s\n", meta[i].module, meta[i].className);
         for (int j=0; meta[i].methods[j].addr != nullptr; j++) {
             bool is_static = (meta[i].methods[j].name[0] == '+');
             if (is_static != isStatic) continue;
             char* name = isStatic ? meta[i].methods[j].name+1 : meta[i].methods[j].name;
             if (strcmp(signature, name) != 0) continue;
-            // printf("Method %s\n", meta[i].methods[j].name);
             return meta[i].methods[j].addr;
         }
     }

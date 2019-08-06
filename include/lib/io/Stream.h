@@ -35,6 +35,7 @@ static inline void io_stream_Finalize(void* data)
     io_stream_close_file((FILE**) data); 
 }
 
+
 /**
  *  io/file::Write
  * 

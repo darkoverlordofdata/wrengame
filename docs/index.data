@@ -2,7 +2,10 @@
 import "some/tester" for Tester
 import "lib/io/stream" for Stream
 import "lib/io/file" for File
-import "lib/sdl" for Sdl, Window
+import "lib/io/path" for Path
+import "lib/sdl" for Sdl
+import "lib/sdl/window" for Window
+import "lib/sdl/renderer" for Renderer
 
 
 System.print("This is main.wren")
@@ -11,89 +14,45 @@ class Main {
     construct new() {}
     main() { 
 	    System.print("Hello world")
-        var file = Stream.Create("wren/some/path.txt") 
+        var file = Stream.new("wren/some/path.txt") 
         file.Write("some text") 
         file.Close()
 
-        var other = Stream.Create("wren/some/other.txt")
+        var other = Stream.new("wren/some/other.txt")
         var t = other.Read()
         other.Close()
         System.print("======================================\n")
         System.print(t)
         System.print("======================================\n")
 
-        this.Test1()
-        this.Test2()
-        this.Test3()
-        this.Test4()
+        var path = Path.new(Path.Cwd)
 
-        // Sdl.Init(Sdl.INIT_VIDEO) // | Sdl.INIT_EVENTS | Sdl.INIT_TIMER | Sdl.INIT_AUDIO)
-        // var window = Window.Create("SDL Demo", Window.WINDOWPOS_CENTERED, Window.WINDOWPOS_CENTERED,
-        //                                 640, 480, Window.WINDOW_SHOWN)
-        // // var window = Window.Create("SDL Demo", -1, -1, 640, 480, Window.WINDOW_SHOWN)
+        System.print(Path.Cwd)
+        var cwd = path.ToString()
+        System.print(cwd)
+        System.print("Absolute %(Path.Absolute)")
+        System.print("Relative %(Path.Relative)")
+        System.print("Simple %(Path.Simple)")
+        System.print("Type = %(Path.Type(cwd))")
+        System.print("======================================\n")
 
-        // if (window == null) {
-        //     System.print("Could not be opened")
-        // } else {
-        //     Sdl.Delay(3000)
+
+        Sdl.Init(Sdl.INIT_VIDEO)// | Sdl.INIT_EVENTS | Sdl.INIT_TIMER | Sdl.INIT_AUDIO)
+
+        var window = Window.new("SDL Demo", Window.WINDOWPOS_CENTERED, Window.WINDOWPOS_CENTERED,
+                                        640, 480, Window.WINDOW_SHOWN)
+        var renderer = Renderer.new(window, -1, Sdl.RENDERER_ACCELERATED)
+        // for (i in 1...1000) {
+            renderer.DrawColor(100, 149, 237, 255)
+            renderer.Clear()
+            renderer.Present()
         // }
+        // renderer.Close()
         // window.Close()
         // Sdl.Quit()
         
     }
 
-    Test1() {
-        var fiber = Fiber.new { 
-            System.print("It's alive!") 
-        }
-
-        System.print(fiber.isDone) // false
-        fiber.call() // It's alive!
-        System.print(fiber.isDone) // true
-
-    }
-    Test2() {
-        var fiber = Fiber.new { 
-            System.print("Before yield") 
-            Fiber.yield() 
-            System.print("Resumed") 
-        }
-
-        System.print("Before call") //Before call
-        fiber.call() //Before yield
-        System.print("Calling again") //Calling again
-        fiber.call() //Resumed
-        System.print("All done") //All Done
-
-    }
-    Test3() {
-        var fiber = Fiber.new {|param| 
-            System.print(param) 
-            var result = Fiber.yield() 
-            System.print(result) 
-        }
-
-        fiber.call("First") //First
-        fiber.call("Second") //Second
-    }
-    Test4() {
-        var fiber = Fiber.new { 
-            (1..10).each {|i| 
-                Fiber.yield(i) 
-            } 
-        }
-        System.print(fiber.call())
-        System.print(fiber.call())
-        System.print(fiber.call())
-        System.print(fiber.call())
-        System.print(fiber.call())
-        System.print(fiber.call())
-        System.print(fiber.call())
-        System.print(fiber.call())
-        System.print(fiber.call())
-        System.print(fiber.call())
-        System.print(fiber.call())
-    }
 }
 // tester.wren
 import "lib/io/stream" for Stream
@@ -119,44 +78,14 @@ foreign class Sdl {
     static INIT_EVENTS         { 0x00004000 }
     static INIT_SENSOR         { 0x00008000 }
 
+    static RENDERER_ACCELERATED { 0x00000002 }
     foreign static Init(flags) 
     foreign static Delay(ms)
     foreign static Quit()
 }
 
-foreign class Window { 
-
-    static WINDOWPOS_UNDEFINED { 0x1FFF0000 }
-    static WINDOWPOS_CENTERED { 0x2FFF0000 }
-    static WINDOW_FULLSCREEN { 0x00000001 }         /**< fullscreen window */
-    static WINDOW_OPENGL { 0x00000002 }             /**< window usable with OpenGL context */
-    static WINDOW_SHOWN { 0x00000004 }              /**< window is visible */
-    static WINDOW_HIDDEN { 0x00000008 }             /**< window is not visible */
-    static WINDOW_BORDERLESS { 0x00000010 }         /**< no window decoration */
-    static WINDOW_RESIZABLE { 0x00000020 }          /**< window can be resized */
-    static WINDOW_MINIMIZED { 0x00000040 }          /**< window is minimized */
-    static WINDOW_MAXIMIZED { 0x00000080 }          /**< window is maximized */
-    static WINDOW_INPUT_GRABBED { 0x00000100 }      /**< window has grabbed input focus */
-    static WINDOW_INPUT_FOCUS { 0x00000200 }        /**< window has input focus */
-    static WINDOW_MOUSE_FOCUS { 0x00000400 }        /**< window has mouse focus */
-    static WINDOW_FULLSCREEN_DESKTOP  { 0x00000001 | 0x00001000 }
-    static WINDOW_FOREIGN { 0x00000800 }            /**< window not created by SDL */
-    static WINDOW_ALLOW_HIGHDPI { 0x00002000 }      /**< window should be created in high-DPI mode if supported.
-    //                                                  On macOS NSHighResolutionCapable must be set true in the
-    //                                                  application's Info.plist for this to have any effect. */
-    static WINDOW_MOUSE_CAPTURE { 0x00004000 }      /**< window has mouse captured (unrelated to INPUT_GRABBED) */
-    static WINDOW_ALWAYS_ON_TOP { 0x00008000 }      /**< window should always be above others */
-    static WINDOW_SKIP_TASKBAR  { 0x00010000 }      /**< window should not be added to the taskbar */
-    static WINDOW_UTILITY       { 0x00020000 }      /**< window should be treated as a utility window */
-    static WINDOW_TOOLTIP       { 0x00040000 }      /**< window should be treated as a tooltip */
-    static WINDOW_POPUP_MENU    { 0x00080000 }      /**< window should be treated as a popup menu */
-    static WINDOW_VULKAN        { 0x10000000 }      /**< window usable for Vulkan surface */
-
-    construct Create(title, x, y, w, h, flags) {}
-    foreign Close()
-
-}foreign class Stream { 
-    construct Create(path) {}
+foreign class Stream { 
+    construct new(path) {}
 
     foreign Write(text) 
     foreign Close() 
@@ -234,3 +163,89 @@ class File {
     }
  }
 
+foreign class Path { 
+    construct new(path) {}
+
+    // An absolute path, starting with "/" on POSIX systems, a drive letter on
+    // Windows, etc.
+    foreign static Absolute
+
+    // An explicitly relative path, starting with "./" or "../".
+    foreign static Relative
+
+    // A path that has no leading prefix, like "foo/bar".
+    foreign static Simple
+
+    // the current working directory
+    foreign static Cwd 
+
+    // Categorizes what form a path is.
+    foreign static Type(string)
+
+    // Strips off the last component of the path name.
+    foreign DirName()
+
+    // Strips off the file extension from the last component of the path.
+    foreign RemoveExtension()
+
+    // Appends [string] to [path].
+    foreign Join(string)
+
+    // Appends [c] to the path, growing the buffer if needed.
+    foreign AppendChar(c)
+
+    // Appends [string] to the path, growing the buffer if needed.
+    foreign AppendString(string)
+
+    // Simplifies the path string as much as possible.
+    //
+    // Applies and removes any "." or ".." components, collapses redundant "/"
+    // characters, and normalizes all path separators to "/".
+    foreign Normalize()
+
+    // Allocates a new string exactly the right length and copies this path to it.
+    foreign ToString()
+}
+
+foreign class Window { 
+
+    static WINDOWPOS_UNDEFINED { 0x1FFF0000 }
+    static WINDOWPOS_CENTERED { 0x2FFF0000 }
+    static WINDOW_FULLSCREEN { 0x00000001 }         /**< fullscreen window */
+    static WINDOW_OPENGL { 0x00000002 }             /**< window usable with OpenGL context */
+    static WINDOW_SHOWN { 0x00000004 }              /**< window is visible */
+    static WINDOW_HIDDEN { 0x00000008 }             /**< window is not visible */
+    static WINDOW_BORDERLESS { 0x00000010 }         /**< no window decoration */
+    static WINDOW_RESIZABLE { 0x00000020 }          /**< window can be resized */
+    static WINDOW_MINIMIZED { 0x00000040 }          /**< window is minimized */
+    static WINDOW_MAXIMIZED { 0x00000080 }          /**< window is maximized */
+    static WINDOW_INPUT_GRABBED { 0x00000100 }      /**< window has grabbed input focus */
+    static WINDOW_INPUT_FOCUS { 0x00000200 }        /**< window has input focus */
+    static WINDOW_MOUSE_FOCUS { 0x00000400 }        /**< window has mouse focus */
+    static WINDOW_FULLSCREEN_DESKTOP  { 0x00000001 | 0x00001000 }
+    static WINDOW_FOREIGN { 0x00000800 }            /**< window not created by SDL */
+    static WINDOW_ALLOW_HIGHDPI { 0x00002000 }      /**< window should be created in high-DPI mode if supported.
+    //                                                  On macOS NSHighResolutionCapable must be set true in the
+    //                                                  application's Info.plist for this to have any effect. */
+    static WINDOW_MOUSE_CAPTURE { 0x00004000 }      /**< window has mouse captured (unrelated to INPUT_GRABBED) */
+    static WINDOW_ALWAYS_ON_TOP { 0x00008000 }      /**< window should always be above others */
+    static WINDOW_SKIP_TASKBAR  { 0x00010000 }      /**< window should not be added to the taskbar */
+    static WINDOW_UTILITY       { 0x00020000 }      /**< window should be treated as a utility window */
+    static WINDOW_TOOLTIP       { 0x00040000 }      /**< window should be treated as a tooltip */
+    static WINDOW_POPUP_MENU    { 0x00080000 }      /**< window should be treated as a popup menu */
+    static WINDOW_VULKAN        { 0x10000000 }      /**< window usable for Vulkan surface */
+
+    construct new(title, x, y, w, h, flags) {}
+    foreign Close()
+
+}
+foreign class Renderer { 
+
+
+    construct new(window, mode, flag) {}
+    foreign Close()
+    foreign DrawColor(r, g, b, a)
+    foreign Clear()
+    foreign Present()
+
+}
