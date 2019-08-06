@@ -8,7 +8,8 @@
 
 int main(int argc, const char* argv[])
 {
-    Game* game = GameNew("SdL Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 600, 480, SDL_WINDOW_SHOWN);
+    Game* game = GameNew("SdL Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+                        600, 480, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
     game->GameLoop(game);
     game->Dispose(game);
     return 0;

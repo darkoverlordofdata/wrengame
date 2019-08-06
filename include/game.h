@@ -3,7 +3,12 @@
 #include "dark.h"
 #include "wren.h"
 #include "vm/config.h"
+#define GL3_PROTOTYPES 1
+#include <GLES3/gl3.h>
 #include "SDL2/SDL.h"
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 char* strdup(const char* s) {
@@ -12,6 +17,9 @@ char* strdup(const char* s) {
     if (new == NULL) return NULL;
     return (char*)memcpy(new, s, len);
 }
+#else
+#define GLEW_STATIC
+#include <GL/glew.h>
 #endif
 // #include "tglm.h"
 
@@ -36,6 +44,7 @@ typedef struct Game
     GameFn HandleEvents;
     GameFn GameLoop;
     SDL_Window *window;
+    SDL_GLContext context;
     SDL_Renderer *renderer;
     char* title;
     int x;
@@ -45,6 +54,8 @@ typedef struct Game
     Uint32 flags;
     bool running;
     int sdlVersion;
+    int gl_major_version;
+    int gl_minor_version;
     int ticks;
     int fps;
     float factor;
@@ -75,9 +86,12 @@ static inline void Game_Update(Game* game){
  * Render
  */
 static inline void Game_Render(Game* game) {
-    SDL_SetRenderDrawColor(game->renderer, 100, 149, 237, 255);
-    SDL_RenderClear(game->renderer);
-    SDL_RenderPresent(game->renderer);
+    // glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    // 100,149,237,255
+    glClearColor(0.392156f, 0.584313f, 0.929411f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    SDL_GL_SwapWindow(game->window);
 }
 
 /**
@@ -125,11 +139,11 @@ static inline void Game_Tick(Game* game) {
  * Dispose
  */
 static inline void Game_Dispose(Game* game) {
-    SDL_DestroyRenderer(game->renderer);
     SDL_DestroyWindow(game->window);
     free(game->title);
     free(game->keys);
     free(game);
+    IMG_Quit();
     SDL_Quit();
 }
 
@@ -142,7 +156,6 @@ static inline void Game_GameLoop(Game* game) {
 #else
     while (true) {
         game->Tick(game);
-        // printf("Start game loop %x\n", game->running);
         if (!game->running) break;
     }
 #endif
@@ -154,8 +167,7 @@ static inline void Game_GameLoop(Game* game) {
  */
 static inline Game* GameNew(char* title, int x, int y, int w, int h, int flags)
 {
-    // if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0) {
-    if (SDL_Init( SDL_INIT_VIDEO ) < 0) {
+    if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0) {
         LogSDLError("Unable to initialize SDL2");
         return nullptr;
     }
@@ -178,10 +190,52 @@ static inline Game* GameNew(char* title, int x, int y, int w, int h, int flags)
     game->flags = flags;
     game->running = true;
     game->keys = calloc(256, sizeof(bool));
-    game->window = SDL_CreateWindow(title, x, y, w, h, flags);
-    game->renderer = SDL_CreateRenderer(game->window, -1, SDL_RENDERER_ACCELERATED);
+    game->gl_major_version = 3;
+    #ifdef __EMSCRIPTEN__
+    game->gl_minor_version = 0;
+    #else
+    game->gl_minor_version = 3;
+    #endif
 
-    // write up the methods
+    /* Request opengl 3.3 context.*/
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, game->gl_major_version);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, game->gl_minor_version);
+
+    /* Turn on double buffering with a 24bit Z buffer.
+     * You may need to change this to 16 or 32 for your system */
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+    game->window = SDL_CreateWindow(title, x, y, w, h, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
+    game->context = SDL_GL_CreateContext(game->window);
+
+    #ifdef __EMSCRIPTEN__
+    const int img_flags = IMG_INIT_PNG;
+    #else
+    const int img_flags = IMG_INIT_PNG | IMG_INIT_JPG;
+    #endif
+    if (IMG_Init(img_flags) != img_flags) { 
+        LogSDLError("Init image");
+    }
+    TTF_Init();
+    if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048) == -1) {
+        LogSDLError("Init mixer");
+    }
+
+    #ifndef __EMSCRIPTEN__
+    // Load OpenGL EntryPoints for desktop
+    glewExperimental = GL_TRUE;
+    glewInit();
+    glGetError(); // Call it once to catch glewInit() bug, all other errors are now from our application.
+    #endif
+
+    // OpenGL configuration
+    glViewport(0, 0, game->w, game->h);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // wrire up the methods
     game->Update = Game_Update;
     game->Render = Game_Render;
     game->Tick = Game_Tick;
