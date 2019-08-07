@@ -12,7 +12,7 @@
 #include <SDL2/SDL_ttf.h>
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
-char* strdup(const char* s) {
+static inline char* strdup(const char* s) {
     size_t len = strlen(s)+1;
     void* new = malloc(len);
     if (new == NULL) return NULL;
@@ -245,6 +245,10 @@ static inline Game* GameNew(const char* title, int x, int y, int w, int h, int f
     return game;
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+///////  wren bindings 
+//////////////////////////////////////////////////////////////////////////////////
+
 /**
  *  xna/game::Allocate
  */
@@ -259,7 +263,6 @@ static inline void xna_game_Allocate(WrenVM* vm)
     const int flags = wrenGetSlotDouble(vm, 6);
 
     *game = GameNew(title, x, y, w, h, flags); 
-
 }
 
 /**

@@ -26,7 +26,21 @@ var SDL_WINDOW_TOOLTIP       = 0x00040000       /**< window should be treated as
 var SDL_WINDOW_POPUP_MENU    = 0x00080000       /**< window should be treated as a popup menu */
 var SDL_WINDOW_VULKAN        = 0x10000000       /**< window usable for Vulkan surface */
 
-foreign class Game { 
+var SDL_INIT_TIMER          = 0x00000001 
+var SDL_INIT_AUDIO          = 0x00000010 
+var SDL_INIT_VIDEO          = 0x00000020            /**< SDL_INIT_VIDEO implies SDL_INIT_EVENTS */
+var SDL_INIT_JOYSTICK       = 0x00000200            /**< SDL_INIT_JOYSTICK implies SDL_INIT_EVENTS */
+var SDL_INIT_HAPTIC         = 0x00001000 
+var SDL_INIT_GAMECONTROLLER = 0x00002000            /**< SDL_INIT_GAMECONTROLLER implies SDL_INIT_JOYSTICK */
+var SDL_INIT_EVENTS         = 0x00004000 
+var SDL_INIT_SENSOR         = 0x00008000 
+
+var SDL_RENDERER_ACCELERATED = 0x00000002 
+
+/**
+ * Internal Implementation 
+ */
+foreign class GameImpl { 
     construct new(title, x, y, w, h, flags) {}
     foreign Update()
     foreign Render()
@@ -34,4 +48,37 @@ foreign class Game {
     foreign Dispose()
     foreign HandleEvents()
     foreign GameLoop()
+}
+
+/**
+ * Base Game Class 
+ */
+class Game {
+    construct new(title, x, y, w, h, flags) {
+        _impl = GameImpl.new(title, x, y, w, h, flags)
+    }
+
+    Update() {
+        _impl.Update()
+    }
+
+    Render() {
+        _impl.Render()
+    }
+
+    Tick() {
+        _impl.Tick()
+    }
+
+    Dispose() {
+        _impl.Dispose()
+    }
+
+    HandleEvents() {
+        _impl.HandleEvents()
+    }
+
+    GameLoop() {
+        _impl.GameLoop()
+    }
 }

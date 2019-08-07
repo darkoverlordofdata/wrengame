@@ -4,8 +4,7 @@
 #include <wren.h>
 #include "dark.h"
 #include "lib/io.h"
-#include "lib/sdl.h"
-#include "game.h"
+#include "lib/xna.h"
 
 static inline Class* GetMetaData()
 {
@@ -40,30 +39,7 @@ static inline Class* GetMetaData()
             }
         },
         {
-            "lib/sdl", "Sdl", nullptr, nullptr,
-            {
-                { "+Init(_)",               sdl_Init },
-                { "+Delay(_)",              sdl_Delay },
-                { "+Quit()",                sdl_Quit },
-            }
-        },
-        {
-            "lib/sdl/window", "Window", sdl_window_Allocate, sdl_window_Finalize,
-            {
-                { "Close()",                sdl_window_Close },
-            }
-        },
-        {
-            "lib/sdl/renderer", "Renderer", sdl_renderer_Allocate, sdl_renderer_Finalize,
-            {
-                { "DrawColor(_,_,_,_)",     sdl_renderer_DrawColor },
-                { "Clear()",                sdl_renderer_Clear },
-                { "Present()",              sdl_renderer_Present },
-                { "Close()",                sdl_renderer_Close },
-            }
-        },
-        {
-            "lib/xna/game", "Game", xna_game_Allocate, xna_game_Finalize,
+            "lib/xna/game", "GameImpl", xna_game_Allocate, xna_game_Finalize,
             {
                 { "Update()",               xna_game_Update },
                 { "Render()",               xna_game_Render },
