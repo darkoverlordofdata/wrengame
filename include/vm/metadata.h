@@ -5,6 +5,8 @@
 #include "dark.h"
 #include "lib/io.h"
 #include "lib/sdl.h"
+#include "game.h"
+
 static inline Class* GetMetaData()
 {
     /**
@@ -58,6 +60,17 @@ static inline Class* GetMetaData()
                 { "Clear()",                sdl_renderer_Clear },
                 { "Present()",              sdl_renderer_Present },
                 { "Close()",                sdl_renderer_Close },
+            }
+        },
+        {
+            "lib/xna/game", "Game", xna_game_Allocate, xna_game_Finalize,
+            {
+                { "Update()",               xna_game_Update },
+                { "Render()",               xna_game_Render },
+                { "Tick()",                 xna_game_Tick },
+                { "Dispose()",              xna_game_Dispose },
+                { "HandleEvents()",         xna_game_HandleEvents },
+                { "GameLoop()",             xna_game_GameLoop },
             }
         }
     };

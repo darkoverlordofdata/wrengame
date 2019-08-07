@@ -6,6 +6,7 @@ import "lib/io/path" for Path
 import "lib/sdl" for Sdl
 import "lib/sdl/window" for Window
 import "lib/sdl/renderer" for Renderer
+import "lib/xna/game" for Game, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOW_SHOWN
 
 
 System.print("This is main.wren")
@@ -36,20 +37,10 @@ class Main {
         System.print("Type = %(Path.Type(cwd))")
         System.print("======================================\n")
 
-
-        Sdl.Init(Sdl.INIT_VIDEO)// | Sdl.INIT_EVENTS | Sdl.INIT_TIMER | Sdl.INIT_AUDIO)
-
-        var window = Window.new("SDL Demo", Window.WINDOWPOS_CENTERED, Window.WINDOWPOS_CENTERED,
-                                        640, 480, Window.WINDOW_SHOWN)
-        var renderer = Renderer.new(window, -1, Sdl.RENDERER_ACCELERATED)
-        // for (i in 1...1000) {
-            renderer.DrawColor(100, 149, 237, 255)
-            renderer.Clear()
-            renderer.Present()
-        // }
-        // renderer.Close()
-        // window.Close()
-        // Sdl.Quit()
+        var game = Game.new("SdL Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+                        600, 480, SDL_WINDOW_SHOWN )
+        game.GameLoop()
+        game.Dispose()
         
     }
 

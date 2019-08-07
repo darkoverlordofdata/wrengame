@@ -1,3 +1,4 @@
+#pragma once
 #include <stdio.h>
 #include <string.h>
 #include "dark.h"
@@ -45,7 +46,6 @@ typedef struct Game
     GameFn GameLoop;
     SDL_Window *window;
     SDL_GLContext context;
-    SDL_Renderer *renderer;
     char* title;
     int x;
     int y;
@@ -165,7 +165,7 @@ static inline void Game_GameLoop(Game* game) {
 /**
  * New Game
  */
-static inline Game* GameNew(char* title, int x, int y, int w, int h, int flags)
+static inline Game* GameNew(const char* title, int x, int y, int w, int h, int flags)
 {
     if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0) {
         LogSDLError("Unable to initialize SDL2");
@@ -181,7 +181,6 @@ static inline Game* GameNew(char* title, int x, int y, int w, int h, int flags)
     }
 
     Game* game = malloc(sizeof(Game));
-    game->sdlVersion = version;
     game->title = strdup(title);
     game->x = x;
     game->y = y;
@@ -190,6 +189,7 @@ static inline Game* GameNew(char* title, int x, int y, int w, int h, int flags)
     game->flags = flags;
     game->running = true;
     game->keys = calloc(256, sizeof(bool));
+    game->sdlVersion = version;
     game->gl_major_version = 3;
     #ifdef __EMSCRIPTEN__
     game->gl_minor_version = 0;
@@ -236,11 +236,93 @@ static inline Game* GameNew(char* title, int x, int y, int w, int h, int flags)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // wrire up the methods
-    game->Update = Game_Update;
-    game->Render = Game_Render;
-    game->Tick = Game_Tick;
-    game->HandleEvents = Game_HandleEvents;
-    game->Dispose = Game_Dispose;
-    game->GameLoop = Game_GameLoop;
+    game->Update        = Game_Update;
+    game->Render        = Game_Render;
+    game->Tick          = Game_Tick;
+    game->HandleEvents  = Game_HandleEvents;
+    game->Dispose       = Game_Dispose;
+    game->GameLoop      = Game_GameLoop;
     return game;
+}
+
+/**
+ *  xna/game::Allocate
+ */
+static inline void xna_game_Allocate(WrenVM* vm) 
+{
+    Game** game = (Game**)wrenSetSlotNewForeign(vm, 0, 0, sizeof(Game*));
+    const char* title = wrenGetSlotString(vm, 1); 
+    const int x = wrenGetSlotDouble(vm, 2);
+    const int y = wrenGetSlotDouble(vm, 3);
+    const int w = wrenGetSlotDouble(vm, 4);
+    const int h = wrenGetSlotDouble(vm, 5);
+    const int flags = wrenGetSlotDouble(vm, 6);
+
+    *game = GameNew(title, x, y, w, h, flags); 
+
+}
+
+/**
+ *  xna/game::Finalize
+ */
+static inline void xna_game_Finalize(void* data) 
+{
+    Game** game = (Game**)data;
+    if (*game != nullptr) {
+        Game_Dispose(*game);
+    }
+}
+
+/**
+ *  xna/game::Update
+ */
+static inline void xna_game_Update(WrenVM* vm) 
+{
+    Game** game = (Game**)wrenGetSlotForeign(vm, 0);
+    Game_Update(*game);
+}
+
+/**
+ *  xna/game::Render
+ */
+static inline void xna_game_Render(WrenVM* vm) 
+{
+    Game** game = (Game**)wrenGetSlotForeign(vm, 0);
+    Game_Render(*game);
+}
+
+/**
+ *  xna/game::Tick
+ */
+static inline void xna_game_Tick(WrenVM* vm) 
+{
+    Game** game = (Game**)wrenGetSlotForeign(vm, 0);
+    Game_Tick(*game);
+}
+
+/**
+ *  xna/game::Dispose
+ */
+static inline void xna_game_Dispose(WrenVM* vm) 
+{
+    Game** game = (Game**)wrenGetSlotForeign(vm, 0);
+    Game_Dispose(*game);
+    *game = nullptr;
+}
+/**
+ *  xna/game::HandleEvents
+ */
+static inline void xna_game_HandleEvents(WrenVM* vm) 
+{
+    Game** game = (Game**)wrenGetSlotForeign(vm, 0);
+    Game_HandleEvents(*game);
+}
+
+/**
+ *  xna/game::GameLoop
+ */
+static inline void xna_game_GameLoop(WrenVM* vm) 
+{
+    Game** game = (Game**)wrenGetSlotForeign(vm, 0);
+    Game_GameLoop(*game);
 }

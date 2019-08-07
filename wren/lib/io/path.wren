@@ -41,3 +41,4 @@ foreign class Path {
     // Allocates a new string exactly the right length and copies this path to it.
     foreign ToString()
 }
+
