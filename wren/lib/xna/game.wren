@@ -47,7 +47,8 @@ foreign class GameImpl {
     foreign Tick()
     foreign Dispose()
     foreign HandleEvents()
-    foreign GameLoop()
+    foreign Start()
+    foreign Run()
 }
 
 /**
@@ -56,6 +57,10 @@ foreign class GameImpl {
 class Game {
     construct new(title, x, y, w, h, flags) {
         _impl = GameImpl.new(title, x, y, w, h, flags)
+    }
+
+    Start() {
+        _impl.Start()
     }
 
     Update() {
@@ -78,7 +83,7 @@ class Game {
         _impl.HandleEvents()
     }
 
-    GameLoop() {
-        _impl.GameLoop()
+    Run() {
+        _impl.Run()
     }
 }

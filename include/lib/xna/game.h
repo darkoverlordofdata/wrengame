@@ -1,6 +1,10 @@
 #pragma once
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#define _POSIX_C_SOURCE	199309L
+#include <time.h>
+#include <unistd.h>
 #include "dark.h"
 #include "wren.h"
 #include "vm/config.h"
@@ -10,6 +14,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
+
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 static inline char* strdup(const char* s) {
@@ -24,6 +29,42 @@ static inline char* strdup(const char* s) {
 #endif
 // #include "tglm.h"
 
+
+// 100,149,237,255
+#define bgd_r 0.392156f
+#define bgd_g 0.584313f
+#define bgd_b 0.929411f
+#ifndef CLOCK_MONOTONIC
+#define CLOCK_MONOTONIC 0
+#endif
+
+#define period_den 1000000000L
+
+static float time_factor = 0.000000001f;
+static float time_fps = 0.01667f;
+static float MS_PER_UPDATE = 0.01667f;
+
+static inline long getNanos(){
+    static struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    long result = (long)ts.tv_sec * period_den + ts.tv_nsec;
+    return result;
+}
+/**
+ * this wont work for nanosec
+ * the double64 format holds 16 digits.
+ * we need 19 digits to store a UTC time to nanoseconds.
+ * 16 digits can only express it to millisconds
+ * 
+ * have to save time as a timespec struct, and compute the diff between 2 structs for delta
+ */
+static inline double getCurrentTime(){
+    static struct timespec ts;
+    static double multiplier = 1.0   / (1.e9);
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return  ts.tv_sec + (ts.tv_nsec * multiplier);
+}
+
 typedef struct Game Game;
 typedef void (*GameFn)(Game* game);
 static void Game_Update(Game*);
@@ -31,7 +72,7 @@ static void Game_Render(Game*);
 static void Game_Tick(Game*);
 static void Game_Dispose(Game*);
 static void Game_HandleEvents(Game*);
-static void Game_GameLoop(Game*);
+static void Game_Run(Game*);
 
 /**
  * The game object
@@ -43,7 +84,8 @@ typedef struct Game
     GameFn Tick;
     GameFn Dispose;
     GameFn HandleEvents;
-    GameFn GameLoop;
+    GameFn Run;
+    GameFn Start;
     SDL_Window *window;
     SDL_GLContext context;
     char* title;
@@ -60,8 +102,12 @@ typedef struct Game
     int fps;
     float factor;
     float delta;
-    float mark1;
-    float mark2;
+    float elapsed;
+    float current;
+    float previous;
+    float lag;
+    long mark1;
+    long mark2;
     int mouseX;
     int mouseY;
     bool mouseDown;
@@ -86,11 +132,8 @@ static inline void Game_Update(Game* game){
  * Render
  */
 static inline void Game_Render(Game* game) {
-    // glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    // 100,149,237,255
-    glClearColor(0.392156f, 0.584313f, 0.929411f, 1.0f);
+    glClearColor(bgd_r, bgd_g, bgd_b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-
     SDL_GL_SwapWindow(game->window);
 }
 
@@ -126,13 +169,83 @@ static inline void Game_HandleEvents(Game* game) {
     }
 }
 
+
+static inline void Game_Start(Game* game) {
+    printf("Game::Start\n");
+    game->running = true;
+    game->factor = time_factor;
+    // game->mark1 = getNanos();
+    game->previous = getCurrentTime();
+    game->lag = 0.0f;
+
+    struct timespec t_info;
+    static struct timespec res_info = {.tv_nsec = 0, .tv_sec = 0};
+    static double multiplier;
+    clock_getres(CLOCK_MONOTONIC, &res_info);
+    multiplier = 1.0   / (1.e9 / res_info.tv_nsec);    
+    multiplier = 1.0   / (1.e9);    
+
+    printf("mul = %d\n", res_info.tv_nsec);
+    clock_gettime(CLOCK_MONOTONIC, &t_info);
+    long ii;
+    for (ii = 0; ii < 1000000000; ii++);
+    for (ii = 0; ii < 1000000000; ii++);
+    for (ii = 0; ii < 1000000000; ii++);
+    for (ii = 0; ii < 1000000000; ii++);
+    for (ii = 0; ii < 1000000000; ii++);
+    double tt = getCurrentTime();
+    printf("%20.10f, %20.10f\n", t_info.tv_sec + (t_info.tv_nsec * multiplier), tt);
+
+}
 /**
  * Tick
  */
 static inline void Game_Tick(Game* game) {
+
+    game->current = getCurrentTime();
+    game->elapsed = game->current - game->previous;
+    game->previous = game->current;
+    game->lag += game->elapsed;
+    // printf("%f - %f - %f\n", game->current, game->previous, game->lag);
     game->HandleEvents(game);
     game->Update(game);
+    while (game->lag >= MS_PER_UPDATE) {
+        game->Update(game);
+        game->lag -= MS_PER_UPDATE;
+        // printf("%1.10f\n", game->lag);
+    }
     game->Render(game);
+
+    // game->mark2 = getNanos();
+    // game->delta += (double)(game->mark2 - game->mark1) * game->factor;
+    // game->ticks += 1;
+    // game->HandleEvents(game);
+    // game->mark1 = game->mark2;
+    // if (game->delta >= time_fps) {
+    //     long mark1 = getNanos();
+    //     game->Update(game);
+    //     game->Render(game);
+    //     long mark2 = getNanos();
+    //     printf("%1.10f\n", game->delta);
+    //     game->ticks = 0;
+    //     game->delta = 0.0f;
+        
+    // } else { 
+    //     /* sleep until the end of this frame  */
+    //     float nsec = time_fps - game->delta;
+    //     // printf("%1.10f\n", nsec);
+    //     static struct timespec wait;
+    //     static struct timespec rem;
+    //     static struct timespec retry;
+    //     wait.tv_sec = 0;
+    //     wait.tv_nsec = nsec * (float)period_den;
+    //     if (nanosleep(&wait, &rem)) {
+    //         // printf("rem = %d\n", rem.tv_nsec);
+    //         nanosleep(rem, retry);
+
+    //     }
+
+    // }
 }
 
 /**
@@ -150,7 +263,7 @@ static inline void Game_Dispose(Game* game) {
 /**
  * GameLoop
  */
-static inline void Game_GameLoop(Game* game) {
+static inline void Game_Run(Game* game) {
 #if __EMSCRIPTEN__
     emscripten_set_main_loop_arg((em_arg_callback_func)game->Tick, (void*)game, -1, 1);
 #else
@@ -187,7 +300,8 @@ static inline Game* GameNew(const char* title, int x, int y, int w, int h, int f
     game->w = w;
     game->h = h;
     game->flags = flags;
-    game->running = true;
+    game->running = false;
+    game->mark1 = getNanos();
     game->keys = calloc(256, sizeof(bool));
     game->sdlVersion = version;
     game->gl_major_version = 3;
@@ -241,7 +355,8 @@ static inline Game* GameNew(const char* title, int x, int y, int w, int h, int f
     game->Tick          = Game_Tick;
     game->HandleEvents  = Game_HandleEvents;
     game->Dispose       = Game_Dispose;
-    game->GameLoop      = Game_GameLoop;
+    game->Run           = Game_Run;
+    game->Start         = Game_Start;
     return game;
 }
 
@@ -322,10 +437,19 @@ static inline void xna_game_HandleEvents(WrenVM* vm)
 }
 
 /**
- *  xna/game::GameLoop
+ *  xna/game::Start
  */
-static inline void xna_game_GameLoop(WrenVM* vm) 
+static inline void xna_game_Start(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_GameLoop(*game);
+    Game_Start(*game);
+}
+
+/**
+ *  xna/game::Run
+ */
+static inline void xna_game_Run(WrenVM* vm) 
+{
+    Game** game = (Game**)wrenGetSlotForeign(vm, 0);
+    Game_Run(*game);
 }

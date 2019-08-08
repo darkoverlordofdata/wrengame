@@ -11,7 +11,9 @@ class Main {
 
         var game = Game.new("SdL Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
                         600, 480, SDL_WINDOW_SHOWN )
-        game.GameLoop()
+                        
+        game.Start()
+        game.Run()
         game.Dispose()
 
         // Game* game = GameNew("SdL Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 

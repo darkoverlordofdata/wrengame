@@ -46,7 +46,8 @@ static inline Class* GetMetaData()
                 { "Tick()",                 xna_game_Tick },
                 { "Dispose()",              xna_game_Dispose },
                 { "HandleEvents()",         xna_game_HandleEvents },
-                { "GameLoop()",             xna_game_GameLoop },
+                { "Start()",                xna_game_Start },
+                { "Run()",                  xna_game_Run },
             }
         }
     };
