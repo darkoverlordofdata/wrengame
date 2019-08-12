@@ -7,33 +7,36 @@ it works in emscripten, too.
 
 link_directories( ${CMAKE_SOURCE_DIR}/lib/ )
 
-    // if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    // }
-    // char* title = "SdL Demo";
-    // int x = SDL_WINDOWPOS_UNDEFINED;
-    // int y = SDL_WINDOWPOS_UNDEFINED;
-    // int h = 480;
-    // int w = 640;
-    // Uint32 flags = SDL_WINDOW_SHOWN;
-    // SDL_Window* window = SDL_CreateWindow(title, x, y, w, h, flags);
+average values per 1000 clock ticks show
+very little difference in performance between 
+the native and wrapped native code:
 
-    // SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    // while (true)
-    // {
-        
-    //     SDL_Event event;
-    //     if (SDL_PollEvent(&event)) {
-    //         if (event.type == SDL_QUIT)
-    //             break;
-    //     }
-    //     SDL_SetRenderDrawColor(renderer, 100, 149, 237, 255);
-    //     SDL_RenderClear(renderer);
-    //     SDL_RenderPresent(renderer);
-    // }
-    // SDL_DestroyRenderer(renderer);
-    // printf("renderer - %s\n", SDL_GetError());
-    // SDL_DestroyWindow(window);
-    // printf("window - %s\n", SDL_GetError());
-    // SDL_Quit();
-    // return 0;
+Directly call native:
+elapsed  lerp     lag
+--------------------------
+0.002460 0.075523 0.001259
+0.003702 0.108497 0.001809
+0.002157 0.061828 0.001031
+0.001924 0.058761 0.000980
+0.001912 0.053835 0.000897
+0.001951 0.058676 0.000978
+0.001862 0.054477 0.000908
+0.001853 0.054923 0.000916
+0.002031 0.060609 0.001010
+0.001931 0.058866 0.000981
+
+Native wrapped in script:
+elapsed  lerp     lag
+--------------------------
+0.002406 0.070866 0.001181
+0.002019 0.059684 0.000995
+0.002003 0.060857 0.001014
+0.001799 0.052244 0.000871
+0.001955 0.056150 0.000936
+0.001970 0.058507 0.000975
+0.001838 0.054033 0.000901
+0.001976 0.057436 0.000957
+0.001878 0.058253 0.000971
+0.001848 0.053812 0.000897
+
 

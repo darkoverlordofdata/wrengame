@@ -41,13 +41,14 @@ static inline Class* GetMetaData()
         {
             "lib/xna/game", "GameImpl", xna_game_Allocate, xna_game_Finalize,
             {
-                { "Update()",               xna_game_Update },
-                { "Render()",               xna_game_Render },
+                { "DoUpdate()",             xna_game_DoUpdate },
+                { "DoDraw()",               xna_game_DoDraw },
                 { "Tick()",                 xna_game_Tick },
                 { "Dispose()",              xna_game_Dispose },
                 { "HandleEvents()",         xna_game_HandleEvents },
                 { "Start()",                xna_game_Start },
                 { "Run()",                  xna_game_Run },
+                { "RunLoop()",              xna_game_RunLoop },
             }
         }
     };

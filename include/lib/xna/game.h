@@ -2,18 +2,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define _POSIX_C_SOURCE	199309L
 #include <time.h>
 #include <unistd.h>
 #include "dark.h"
 #include "wren.h"
 #include "vm/config.h"
+#include <time.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include "gametime.h"
 #define GL3_PROTOTYPES 1
 #include <GLES3/gl3.h>
 #include "SDL2/SDL.h"
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
+
+#define TicksPerMillisecond  10000.0
+#define MillisecondsPerTick 1.0 / (TicksPerMillisecond)
+
+#define TicksPerSecond TicksPerMillisecond * 1000.0   // 10,000,000
+#define SecondsPerTick  1.0 / (TicksPerSecond)         // 0.0001
 
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
@@ -34,85 +43,70 @@ static inline char* strdup(const char* s) {
 #define bgd_r 0.392156f
 #define bgd_g 0.584313f
 #define bgd_b 0.929411f
-#ifndef CLOCK_MONOTONIC
-#define CLOCK_MONOTONIC 0
-#endif
-
-#define period_den 1000000000L
-
-static float time_factor = 0.000000001f;
-static float time_fps = 0.01667f;
-static float MS_PER_UPDATE = 0.01667f;
-
-static inline long getNanos(){
-    static struct timespec ts;
-    timespec_get(&ts, TIME_UTC);
-    long result = (long)ts.tv_sec * period_den + ts.tv_nsec;
-    return result;
-}
-/**
- * this wont work for nanosec
- * the double64 format holds 16 digits.
- * we need 19 digits to store a UTC time to nanoseconds.
- * 16 digits can only express it to millisconds
- * 
- * have to save time as a timespec struct, and compute the diff between 2 structs for delta
- */
-static inline double getCurrentTime(){
-    static struct timespec ts;
-    static double multiplier = 1.0   / (1.e9);
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return  ts.tv_sec + (ts.tv_nsec * multiplier);
-}
 
 typedef struct Game Game;
-typedef void (*GameFn)(Game* game);
-static void Game_Update(Game*);
-static void Game_Render(Game*);
-static void Game_Tick(Game*);
-static void Game_Dispose(Game*);
-static void Game_HandleEvents(Game*);
-static void Game_Run(Game*);
+typedef void (*GameFn)(Game* this);
 
 /**
  * The game object
  */
 typedef struct Game
 {
-    GameFn Update;
-    GameFn Render;
+    GameFn DoUpdate;
+    GameFn DoDraw;
     GameFn Tick;
     GameFn Dispose;
     GameFn HandleEvents;
     GameFn Run;
+    GameFn RunLoop;
     GameFn Start;
+    GameFn Initialize;
+    GameFn LoadContent;
     SDL_Window *window;
     SDL_GLContext context;
     char* title;
     int x;
     int y;
-    int h;
-    int w;
-    Uint32 flags;
-    bool running;
-    int sdlVersion;
-    int gl_major_version;
-    int gl_minor_version;
-    int ticks;
-    int fps;
-    float factor;
-    float delta;
-    float elapsed;
-    float current;
-    float previous;
-    float lag;
-    long mark1;
-    long mark2;
+    int width;
+    int height;
+    uint32_t flags;
     int mouseX;
     int mouseY;
     bool mouseDown;
+    double delta;
+    int sdlVersion;
+    int frameSkip;
+    int gl_major_version;
+    int gl_minor_version;
+    bool isRunning;
+    int ticks;
+    int fps;
+    bool isFixedTimeStep;
+    bool isRunningSlowly;
+    uint64_t targetElapsedTime;
+    uint64_t accumulatedElapsedTime;
+    uint64_t maxElapsedTime;
+    uint64_t totalGameTime;
+    uint64_t elapsedGameTime;
+    uint64_t currentTime;
+    long previousTicks;
+    int updateFrameLag;
+    bool shouldExit;
+    bool suppressDraw;
+    double factor;
     bool *keys;
 } Game;
+
+static inline 
+uint64_t GetCurrentTime() { 
+    struct timeval t;     
+    gettimeofday(&t, nullptr);
+
+    uint64_t ts = t.tv_sec;
+    uint64_t us = t.tv_usec;
+    return (ts * 1000000L) + us;
+}
+
 
 static inline void LogSDLError(const char* msg)
 {
@@ -122,140 +116,159 @@ static inline void LogSDLError(const char* msg)
 /**
  * Update
  */
-static inline void Game_Update(Game* game){
-    if (game->keys[SDLK_ESCAPE]) {
-        game->running = false;
-    }
-}
+static inline void Game_DoUpdate(Game* this){ }
 
 /**
  * Render
  */
-static inline void Game_Render(Game* game) {
+static inline void Game_DoDraw(Game* this) 
+{
     glClearColor(bgd_r, bgd_g, bgd_b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    SDL_GL_SwapWindow(game->window);
+    SDL_GL_SwapWindow(this->window);
 }
 
 /**
  * HandleEvents
  */
-static inline void Game_HandleEvents(Game* game) {
+static inline void Game_HandleEvents(Game* this) 
+{
     SDL_Event event;
-    if (SDL_PollEvent(&event)) {
-        switch (event.type) {
-        case SDL_QUIT:
-            game->running = false;
-            return;
-            break;
-        case SDL_KEYDOWN: 
-            game->keys[ event.key.keysym.sym & 0xff ] = true;
-            break;
-        case SDL_KEYUP:   
-            game->keys[ event.key.keysym.sym & 0xff ] = false;
-            break;
-        case SDL_MOUSEBUTTONDOWN:
-            game->mouseDown = true;
-            break;
-        case SDL_MOUSEBUTTONUP:
-            game->mouseDown = false;
-            break;
-        case SDL_MOUSEMOTION:
-            game->mouseX = event.motion.x;
-            game->mouseY = event.motion.y;
-            break;
-
+    if (SDL_PollEvent(&event)) 
+    {
+        switch (event.type) 
+        {
+            case SDL_QUIT:
+                this->isRunning = false;
+                return;
+                break;
+            case SDL_KEYDOWN: 
+                this->keys[ event.key.keysym.sym & 0xff ] = true;
+                break;
+            case SDL_KEYUP:   
+                this->keys[ event.key.keysym.sym & 0xff ] = false;
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+                this->mouseDown = true;
+                break;
+            case SDL_MOUSEBUTTONUP:
+                this->mouseDown = false;
+                break;
+            case SDL_MOUSEMOTION:
+                this->mouseX = event.motion.x;
+                this->mouseY = event.motion.y;
+                break;
         }
     }
 }
 
 
-static inline void Game_Start(Game* game) {
+static inline void Game_Start(Game* this) 
+{
     printf("Game::Start\n");
-    game->running = true;
-    game->factor = time_factor;
-    // game->mark1 = getNanos();
-    game->previous = getCurrentTime();
-    game->lag = 0.0f;
-
-    struct timespec t_info;
-    static struct timespec res_info = {.tv_nsec = 0, .tv_sec = 0};
-    static double multiplier;
-    clock_getres(CLOCK_MONOTONIC, &res_info);
-    multiplier = 1.0   / (1.e9 / res_info.tv_nsec);    
-    multiplier = 1.0   / (1.e9);    
-
-    printf("mul = %d\n", res_info.tv_nsec);
-    clock_gettime(CLOCK_MONOTONIC, &t_info);
-    long ii;
-    for (ii = 0; ii < 1000000000; ii++);
-    for (ii = 0; ii < 1000000000; ii++);
-    for (ii = 0; ii < 1000000000; ii++);
-    for (ii = 0; ii < 1000000000; ii++);
-    for (ii = 0; ii < 1000000000; ii++);
-    double tt = getCurrentTime();
-    printf("%20.10f, %20.10f\n", t_info.tv_sec + (t_info.tv_nsec * multiplier), tt);
+    this->isRunning = true;
 
 }
 /**
  * Tick
  */
-static inline void Game_Tick(Game* game) {
+static inline void Game_Tick(Game* this) 
+{
+    while (true) {
+        // Advance the accumulated elapsed time.
+        long currentTicks = (GetCurrentTime() - this->currentTime)*10;
+        this->accumulatedElapsedTime = this->accumulatedElapsedTime + currentTicks - this->previousTicks;
+        this->previousTicks = (long)currentTicks;
 
-    game->current = getCurrentTime();
-    game->elapsed = game->current - game->previous;
-    game->previous = game->current;
-    game->lag += game->elapsed;
-    // printf("%f - %f - %f\n", game->current, game->previous, game->lag);
-    game->HandleEvents(game);
-    game->Update(game);
-    while (game->lag >= MS_PER_UPDATE) {
-        game->Update(game);
-        game->lag -= MS_PER_UPDATE;
-        // printf("%1.10f\n", game->lag);
+        // If we're in the fixed timestep mode and not enough time has elapsed
+        // to perform an update we sleep off the the remaining time to save battery
+        // life and/or release CPU time to other threads and processes.
+
+        if (this->isFixedTimeStep && this->accumulatedElapsedTime < this->targetElapsedTime)
+        {
+            int sleepTime = (int)((this->targetElapsedTime - this->accumulatedElapsedTime) * MillisecondsPerTick ); //).TotalMilliseconds();
+            if (sleepTime < 1) { break; }
+            // NOTE: While sleep can be inaccurate in general it is 
+            // accurate enough for frame limiting purposes if some
+            // fluctuation is an acceptable result.
+            usleep(sleepTime*1000);
+            // goto RetryTick;
+        }
+        else break;
+    }    
+    // Do not allow any update to take longer than our maximum.
+    if (this->accumulatedElapsedTime > this->maxElapsedTime)
+        this->accumulatedElapsedTime = this->maxElapsedTime;
+
+    if (this->isFixedTimeStep)
+    {
+        this->elapsedGameTime = this->targetElapsedTime;
+        int stepCount = 0;
+
+        // Perform as many full fixed length time steps as we can.
+        while (this->accumulatedElapsedTime >= this->targetElapsedTime && !this->shouldExit)
+        {
+            this->totalGameTime += this->targetElapsedTime;
+            this->accumulatedElapsedTime -= this->targetElapsedTime;
+            ++stepCount;
+            this->delta = (double)this->elapsedGameTime * SecondsPerTick;
+            this->DoUpdate(this);
+        }
+        //Every update after the first accumulates lag
+        this->updateFrameLag += Max(0, stepCount - 1);
+        //If we think we are isRunning slowly, wait until the lag clears before resetting it
+        if (this->isRunningSlowly)
+        {
+            if (this->updateFrameLag == 0)
+            
+                this->isRunningSlowly = false;
+        }
+        else if (this->updateFrameLag >= 5)
+        {
+            //If we lag more than 5 frames, start thinking we are isRunning slowly
+            this->isRunningSlowly = true;
+        }
+        //Every time we just do one update and one draw, then we are not isRunning slowly, so decrease the lag
+        if (stepCount == 1 && this->updateFrameLag > 0)
+            this->updateFrameLag--;
+
+        // Draw needs to know the total elapsed time
+        // that occured for the fixed length updates.
+        this->elapsedGameTime = this->targetElapsedTime * stepCount;
     }
-    game->Render(game);
-
-    // game->mark2 = getNanos();
-    // game->delta += (double)(game->mark2 - game->mark1) * game->factor;
-    // game->ticks += 1;
-    // game->HandleEvents(game);
-    // game->mark1 = game->mark2;
-    // if (game->delta >= time_fps) {
-    //     long mark1 = getNanos();
-    //     game->Update(game);
-    //     game->Render(game);
-    //     long mark2 = getNanos();
-    //     printf("%1.10f\n", game->delta);
-    //     game->ticks = 0;
-    //     game->delta = 0.0f;
+    else
+    {
+        // Perform a single variable length update.
+        this->elapsedGameTime = this->accumulatedElapsedTime;
+        this->totalGameTime += this->accumulatedElapsedTime;
+        this->accumulatedElapsedTime = 0;
         
-    // } else { 
-    //     /* sleep until the end of this frame  */
-    //     float nsec = time_fps - game->delta;
-    //     // printf("%1.10f\n", nsec);
-    //     static struct timespec wait;
-    //     static struct timespec rem;
-    //     static struct timespec retry;
-    //     wait.tv_sec = 0;
-    //     wait.tv_nsec = nsec * (float)period_den;
-    //     if (nanosleep(&wait, &rem)) {
-    //         // printf("rem = %d\n", rem.tv_nsec);
-    //         nanosleep(rem, retry);
+        // Update();
+        this->DoUpdate(this);
+    }
+    // Draw unless the update suppressed it.
+    if (this->suppressDraw)
+        this->suppressDraw = false;
+    else
+    {
+        // Draw();
+        this->DoDraw(this);
+    }
 
-    //     }
-
-    // }
+    if (this->shouldExit) 
+        this->isRunning = false;
+        // Platform.Exit();
 }
 
 /**
  * Dispose
  */
-static inline void Game_Dispose(Game* game) {
-    SDL_DestroyWindow(game->window);
-    free(game->title);
-    free(game->keys);
-    free(game);
+static inline void Game_Dispose(Game* this) 
+{
+    SDL_DestroyWindow(this->window);
+    free(this->title);
+    free(this->keys);
+    free(this);
     IMG_Quit();
     SDL_Quit();
 }
@@ -263,22 +276,35 @@ static inline void Game_Dispose(Game* game) {
 /**
  * GameLoop
  */
-static inline void Game_Run(Game* game) {
+static inline void Game_Run(Game* this) 
+{
+    // this->Initialize(this);
+    // this->LoadContent(this);
+    this->Start(this);
 #if __EMSCRIPTEN__
-    emscripten_set_main_loop_arg((em_arg_callback_func)game->Tick, (void*)game, -1, 1);
+    emscripten_set_main_loop_arg((em_arg_callback_func)this->RunLoop, (void*)this, -1, 1);
 #else
-    while (true) {
-        game->Tick(game);
-        if (!game->running) break;
+    while (this->isRunning) 
+    {
+        this->RunLoop(this);
     }
 #endif
 }
 
+static inline
+void Game_RunLoop(Game* this)
+{
+    this->HandleEvents(this);
+    if (this->keys[SDLK_ESCAPE]) {
+        this->shouldExit = true;
+    }
+    this->Tick(this);
+}
 
 /**
  * New Game
  */
-static inline Game* GameNew(const char* title, int x, int y, int w, int h, int flags)
+static inline Game* GameNew(const char* title, int x, int y, int width, int height, int flags)
 {
     if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0) {
         LogSDLError("Unable to initialize SDL2");
@@ -293,35 +319,49 @@ static inline Game* GameNew(const char* title, int x, int y, int w, int h, int f
         printf("Using SDL Vesion %d.%d.%d\n", sversion.major, sversion.minor, sversion.patch);
     }
 
-    Game* game = malloc(sizeof(Game));
-    game->title = strdup(title);
-    game->x = x;
-    game->y = y;
-    game->w = w;
-    game->h = h;
-    game->flags = flags;
-    game->running = false;
-    game->mark1 = getNanos();
-    game->keys = calloc(256, sizeof(bool));
-    game->sdlVersion = version;
-    game->gl_major_version = 3;
+    Game* this = malloc(sizeof(Game));
+    this->title = strdup(title);
+    this->x = x;
+    this->y = y;
+    this->width = width;
+    this->height = height;
+    this->flags = flags;
+    
+    this->frameSkip = 0;
+    this->isRunning = false;
+    this->previousTicks = 0;
+    this->isFixedTimeStep = true;
+    this->shouldExit = false;
+    this->suppressDraw = false;
+    this->maxElapsedTime = 500 * TicksPerMillisecond; 
+    this->targetElapsedTime = 166667;
+    this->accumulatedElapsedTime = 0;
+    this->currentTime = GetCurrentTime();
+    this->keys = calloc(256, sizeof(bool));
+    this->sdlVersion = version;
+    this->gl_major_version = 3;
     #ifdef __EMSCRIPTEN__
-    game->gl_minor_version = 0;
+    this->gl_minor_version = 0;
     #else
-    game->gl_minor_version = 3;
+    this->gl_minor_version = 3;
     #endif
 
     /* Request opengl 3.3 context.*/
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, game->gl_major_version);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, game->gl_minor_version);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, this->gl_major_version);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, this->gl_minor_version);
 
     /* Turn on double buffering with a 24bit Z buffer.
      * You may need to change this to 16 or 32 for your system */
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-    game->window = SDL_CreateWindow(title, x, y, w, h, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
-    game->context = SDL_GL_CreateContext(game->window);
+    this->window = SDL_CreateWindow(this->title, 
+                                    this->x, 
+                                    this->y, 
+                                    this->width, 
+                                    this->height, 
+                                    SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
+    this->context = SDL_GL_CreateContext(this->window);
 
     #ifdef __EMSCRIPTEN__
     const int img_flags = IMG_INIT_PNG;
@@ -344,20 +384,22 @@ static inline Game* GameNew(const char* title, int x, int y, int w, int h, int f
     #endif
 
     // OpenGL configuration
-    glViewport(0, 0, game->w, game->h);
+    glViewport(0, 0, this->width, this->height);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // wrire up the methods
-    game->Update        = Game_Update;
-    game->Render        = Game_Render;
-    game->Tick          = Game_Tick;
-    game->HandleEvents  = Game_HandleEvents;
-    game->Dispose       = Game_Dispose;
-    game->Run           = Game_Run;
-    game->Start         = Game_Start;
-    return game;
+    this->DoUpdate      = Game_DoUpdate;
+    this->DoDraw        = Game_DoDraw;
+    this->Tick          = Game_Tick;
+    this->HandleEvents  = Game_HandleEvents;
+    this->Dispose       = Game_Dispose;
+    this->Run           = Game_Run;
+    this->RunLoop       = Game_RunLoop;
+    this->Start         = Game_Start;
+
+    return this;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -394,19 +436,19 @@ static inline void xna_game_Finalize(void* data)
 /**
  *  xna/game::Update
  */
-static inline void xna_game_Update(WrenVM* vm) 
+static inline void xna_game_DoUpdate(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_Update(*game);
+    Game_DoUpdate(*game);
 }
 
 /**
  *  xna/game::Render
  */
-static inline void xna_game_Render(WrenVM* vm) 
+static inline void xna_game_DoDraw(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_Render(*game);
+    Game_DoDraw(*game);
 }
 
 /**
@@ -452,4 +494,13 @@ static inline void xna_game_Run(WrenVM* vm)
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
     Game_Run(*game);
+}
+
+/**
+ *  xna/game::Run
+ */
+static inline void xna_game_RunLoop(WrenVM* vm) 
+{
+    Game** game = (Game**)wrenGetSlotForeign(vm, 0);
+    Game_RunLoop(*game);
 }
