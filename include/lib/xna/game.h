@@ -10,7 +10,6 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include "gametime.h"
 #define GL3_PROTOTYPES 1
 #include <GLES3/gl3.h>
 #include "SDL2/SDL.h"
@@ -26,12 +25,6 @@
 
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
-static inline char* strdup(const char* s) {
-    size_t len = strlen(s)+1;
-    void* new = malloc(len);
-    if (new == NULL) return NULL;
-    return (char*)memcpy(new, s, len);
-}
 #else
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -44,24 +37,11 @@ static inline char* strdup(const char* s) {
 #define bgd_g 0.584313f
 #define bgd_b 0.929411f
 
-typedef struct Game Game;
-typedef void (*GameFn)(Game* this);
-
 /**
- * The game object
+ * The game type
  */
-typedef struct Game
+Type Game
 {
-    GameFn DoUpdate;
-    GameFn DoDraw;
-    GameFn Tick;
-    GameFn Dispose;
-    GameFn HandleEvents;
-    GameFn Run;
-    GameFn RunLoop;
-    GameFn Start;
-    GameFn Initialize;
-    GameFn LoadContent;
     SDL_Window *window;
     SDL_GLContext context;
     char* title;
@@ -98,13 +78,13 @@ typedef struct Game
 } Game;
 
 static inline 
-uint64_t GetCurrentTime() { 
+uint64_t GetTicks() { 
     struct timeval t;     
     gettimeofday(&t, nullptr);
 
     uint64_t ts = t.tv_sec;
     uint64_t us = t.tv_usec;
-    return (ts * 1000000L) + us;
+    return ((ts * 1000000L) + us) * 10;
 }
 
 
@@ -116,12 +96,12 @@ static inline void LogSDLError(const char* msg)
 /**
  * Update
  */
-static inline void Game_DoUpdate(Game* this){ }
+Method void DoUpdate(Game* this){ }
 
 /**
  * Render
  */
-static inline void Game_DoDraw(Game* this) 
+Method void DoDraw(Game* this) 
 {
     glClearColor(bgd_r, bgd_g, bgd_b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -131,7 +111,7 @@ static inline void Game_DoDraw(Game* this)
 /**
  * HandleEvents
  */
-static inline void Game_HandleEvents(Game* this) 
+Method void HandleEvents(Game* this) 
 {
     SDL_Event event;
     if (SDL_PollEvent(&event)) 
@@ -163,7 +143,7 @@ static inline void Game_HandleEvents(Game* this)
 }
 
 
-static inline void Game_Start(Game* this) 
+Method void Start(Game* this) 
 {
     printf("Game::Start\n");
     this->isRunning = true;
@@ -172,18 +152,17 @@ static inline void Game_Start(Game* this)
 /**
  * Tick
  */
-static inline void Game_Tick(Game* this) 
+Method void Tick(Game* this) 
 {
     while (true) {
         // Advance the accumulated elapsed time.
-        long currentTicks = (GetCurrentTime() - this->currentTime)*10;
+        long currentTicks = (GetTicks() - this->currentTime);//*10;
         this->accumulatedElapsedTime = this->accumulatedElapsedTime + currentTicks - this->previousTicks;
         this->previousTicks = (long)currentTicks;
 
         // If we're in the fixed timestep mode and not enough time has elapsed
         // to perform an update we sleep off the the remaining time to save battery
         // life and/or release CPU time to other threads and processes.
-
         if (this->isFixedTimeStep && this->accumulatedElapsedTime < this->targetElapsedTime)
         {
             int sleepTime = (int)((this->targetElapsedTime - this->accumulatedElapsedTime) * MillisecondsPerTick ); //).TotalMilliseconds();
@@ -191,7 +170,11 @@ static inline void Game_Tick(Game* this)
             // NOTE: While sleep can be inaccurate in general it is 
             // accurate enough for frame limiting purposes if some
             // fluctuation is an acceptable result.
+            #ifndef usleep
+            SDL_Delay(sleepTime);
+            #else
             usleep(sleepTime*1000);
+            #endif
             // goto RetryTick;
         }
         else break;
@@ -212,7 +195,7 @@ static inline void Game_Tick(Game* this)
             this->accumulatedElapsedTime -= this->targetElapsedTime;
             ++stepCount;
             this->delta = (double)this->elapsedGameTime * SecondsPerTick;
-            this->DoUpdate(this);
+            DoUpdate(this);
         }
         //Every update after the first accumulates lag
         this->updateFrameLag += Max(0, stepCount - 1);
@@ -244,7 +227,8 @@ static inline void Game_Tick(Game* this)
         this->accumulatedElapsedTime = 0;
         
         // Update();
-        this->DoUpdate(this);
+        this->delta = (double)this->elapsedGameTime * SecondsPerTick;
+        DoUpdate(this);
     }
     // Draw unless the update suppressed it.
     if (this->suppressDraw)
@@ -252,7 +236,7 @@ static inline void Game_Tick(Game* this)
     else
     {
         // Draw();
-        this->DoDraw(this);
+        DoDraw(this);
     }
 
     if (this->shouldExit) 
@@ -263,7 +247,7 @@ static inline void Game_Tick(Game* this)
 /**
  * Dispose
  */
-static inline void Game_Dispose(Game* this) 
+Method void Dispose(Game* this) 
 {
     SDL_DestroyWindow(this->window);
     free(this->title);
@@ -273,38 +257,38 @@ static inline void Game_Dispose(Game* this)
     SDL_Quit();
 }
 
+Method void RunLoop(Game* this)
+{
+    HandleEvents(this);
+    if (this->keys[SDLK_ESCAPE]) {
+        this->shouldExit = true;
+    }
+    Tick(this);
+}
+
 /**
  * GameLoop
  */
-static inline void Game_Run(Game* this) 
+Method void Run(Game* this) 
 {
     // this->Initialize(this);
     // this->LoadContent(this);
-    this->Start(this);
+    Start(this);
 #if __EMSCRIPTEN__
     emscripten_set_main_loop_arg((em_arg_callback_func)this->RunLoop, (void*)this, -1, 1);
 #else
     while (this->isRunning) 
     {
-        this->RunLoop(this);
+        RunLoop(this);
     }
 #endif
 }
 
-static inline
-void Game_RunLoop(Game* this)
-{
-    this->HandleEvents(this);
-    if (this->keys[SDLK_ESCAPE]) {
-        this->shouldExit = true;
-    }
-    this->Tick(this);
-}
 
 /**
  * New Game
  */
-static inline Game* GameNew(const char* title, int x, int y, int width, int height, int flags)
+Ctor Game* GameNew(const char* title, int x, int y, int width, int height, int flags)
 {
     if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0) {
         LogSDLError("Unable to initialize SDL2");
@@ -336,7 +320,7 @@ static inline Game* GameNew(const char* title, int x, int y, int width, int heig
     this->maxElapsedTime = 500 * TicksPerMillisecond; 
     this->targetElapsedTime = 166667;
     this->accumulatedElapsedTime = 0;
-    this->currentTime = GetCurrentTime();
+    this->currentTime = GetTicks();
     this->keys = calloc(256, sizeof(bool));
     this->sdlVersion = version;
     this->gl_major_version = 3;
@@ -389,27 +373,17 @@ static inline Game* GameNew(const char* title, int x, int y, int width, int heig
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // wrire up the methods
-    this->DoUpdate      = Game_DoUpdate;
-    this->DoDraw        = Game_DoDraw;
-    this->Tick          = Game_Tick;
-    this->HandleEvents  = Game_HandleEvents;
-    this->Dispose       = Game_Dispose;
-    this->Run           = Game_Run;
-    this->RunLoop       = Game_RunLoop;
-    this->Start         = Game_Start;
-
     return this;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-///////  wren bindings 
+///////  wren api bindings 
 //////////////////////////////////////////////////////////////////////////////////
 
 /**
  *  xna/game::Allocate
  */
-static inline void xna_game_Allocate(WrenVM* vm) 
+WrenApi xna_game_Allocate(WrenVM* vm) 
 {
     Game** game = (Game**)wrenSetSlotNewForeign(vm, 0, 0, sizeof(Game*));
     const char* title = wrenGetSlotString(vm, 1); 
@@ -425,82 +399,82 @@ static inline void xna_game_Allocate(WrenVM* vm)
 /**
  *  xna/game::Finalize
  */
-static inline void xna_game_Finalize(void* data) 
+WrenApi xna_game_Finalize(void* data) 
 {
     Game** game = (Game**)data;
     if (*game != nullptr) {
-        Game_Dispose(*game);
+        Dispose(*game);
     }
 }
 
 /**
  *  xna/game::Update
  */
-static inline void xna_game_DoUpdate(WrenVM* vm) 
+WrenApi xna_game_DoUpdate(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_DoUpdate(*game);
+    DoUpdate(*game);
 }
 
 /**
  *  xna/game::Render
  */
-static inline void xna_game_DoDraw(WrenVM* vm) 
+WrenApi xna_game_DoDraw(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_DoDraw(*game);
+    DoDraw(*game);
 }
 
 /**
  *  xna/game::Tick
  */
-static inline void xna_game_Tick(WrenVM* vm) 
+WrenApi xna_game_Tick(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_Tick(*game);
+    Tick(*game);
 }
 
 /**
  *  xna/game::Dispose
  */
-static inline void xna_game_Dispose(WrenVM* vm) 
+WrenApi xna_game_Dispose(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_Dispose(*game);
+    Dispose(*game);
     *game = nullptr;
 }
 /**
  *  xna/game::HandleEvents
  */
-static inline void xna_game_HandleEvents(WrenVM* vm) 
+WrenApi xna_game_HandleEvents(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_HandleEvents(*game);
+    HandleEvents(*game);
 }
 
 /**
  *  xna/game::Start
  */
-static inline void xna_game_Start(WrenVM* vm) 
+WrenApi xna_game_Start(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_Start(*game);
+    Start(*game);
 }
 
 /**
  *  xna/game::Run
  */
-static inline void xna_game_Run(WrenVM* vm) 
+WrenApi xna_game_Run(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_Run(*game);
+    Run(*game);
 }
 
 /**
  *  xna/game::Run
  */
-static inline void xna_game_RunLoop(WrenVM* vm) 
+WrenApi xna_game_RunLoop(WrenVM* vm) 
 {
     Game** game = (Game**)wrenGetSlotForeign(vm, 0);
-    Game_RunLoop(*game);
+    RunLoop(*game);
 }

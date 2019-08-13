@@ -39,6 +39,18 @@ SOFTWARE.
 #define auto __auto_type
 
 /**
+ *  MACRO Method
+ *  MACRO Type
+ * 
+ * Overloadeble multi-methods
+ * 
+ * requires clang, but then so does emscripten
+ */
+#define Method static inline __attribute__((overloadable))
+#define Type typedef struct
+#define Ctor static inline
+
+/**
  * Redefine true and false for use with _Generic,
  * such that true and false match bool, not int.
  */
@@ -74,12 +86,12 @@ SOFTWARE.
 /**
  * Bind Wren Script api to native functions
  */
-typedef struct Method
+typedef struct WrenMethod
 {
     char* name;
     void* addr;
 
-} Method;
+} WrenMethod;
 
 typedef struct Class 
 {
@@ -87,7 +99,8 @@ typedef struct Class
     char* className;
     void* allocate;
     void* finalize;
-    Method methods[100];
+    WrenMethod methods[100];
 
 } Class;
 
+#define WrenApi static inline void

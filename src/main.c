@@ -11,8 +11,8 @@ int main(int argc, const char* argv[])
     Game* game = GameNew("SdL Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
                         600, 480, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
     // game->Start(game);
-    game->Run(game);
-    game->Dispose(game);
+    Run(game);
+    Dispose(game);
 
     return 0;
 
