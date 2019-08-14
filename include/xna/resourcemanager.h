@@ -4,11 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "dark.h"
-#include "wren.h"
-#include "tglm.h"
 #include "texture2d.h"
 #include "shader.h"
-#include "map.h"
 
 
 

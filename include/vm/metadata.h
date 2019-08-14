@@ -3,15 +3,15 @@
 #include <string.h>
 #include <wren.h>
 #include "dark.h"
-#include "lib/io.h"
-#include "lib/xna.h"
+#include "lib/io/io.h"
+#include "lib/xna/xna.h"
 
-static inline Class* GetMetaData()
+static inline Script* GetMetaData()
 {
     /**
      * native class bindings
      */
-    static struct Class metadata[] = 
+    static struct Script metadata[] = 
     {
         {
             "lib/io/path", "Path",  io_path_Allocate, io_path_Finalize,
@@ -52,5 +52,5 @@ static inline Class* GetMetaData()
             }
         }
     };
-    return (Class*)&metadata;
+    return (Script*)&metadata;
 }

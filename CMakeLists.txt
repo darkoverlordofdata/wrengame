@@ -28,7 +28,7 @@ endif ()
 #
 
 list ( APPEND C_SOURCES src/main.c )
-list ( APPEND C_SOURCES src/path.c )
+# list ( APPEND C_SOURCES src/path.c )
 #
 #   application includes
 #

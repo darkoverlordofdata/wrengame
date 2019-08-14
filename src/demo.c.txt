@@ -4,10 +4,8 @@
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #include <SDL2/SDL.h>
-// #include <SDL/SDL_ttf.h>
 #else
 #include <SDL2/SDL.h>
-// #include <SDL2/SDL_ttf.h>
 #endif
 
 #define SCREEN_WIDTH  200

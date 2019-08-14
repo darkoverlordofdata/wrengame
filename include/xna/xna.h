@@ -1,22 +1,7 @@
-/**
- *
- *     
- *
- *        ________                __   _______________  ___
- *        \______ \ _____ _______|  | _\_   _____/\   \/  /
- *        |    |  \\__  \\_  __ \  |/ /|    __)   \     / 
- *        |    `   \/ __ \|  | \/    < |     \    /     \ 
- *        /_______  (____  /__|  |__|_ \\___  /   /___/\  \
- *                \/     \/           \/    \/          \_/
- * 
- *            DarkFX Copyright 2018 MIT Dark Overlord of Data         
- * 
- *                        oop framework for c        
- */
 /* ******************************************************************************
  * MIT License
  *
- * Copyright (c) 2018-2018 Bruce Davidson &lt;darkoverlordofdata@gmail.com&gt;
+ * Copyright (c) 2019 Bruce Davidson &lt;darkoverlordofdata@gmail.com&gt;
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -38,12 +23,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  ****************************************************************************** */
 #pragma once
-
-
-#include "dark/core.h"
-// #include "dark/array.h"
-// #include "dark/either.h"
-#include "dark/map.h"
-#include "dark/path.h"
-#include "dark/tglm.h"
-
+#include "game.h"
+#include "resourcemanager.h"
+#include "shader.h"
+#include "spriterenderer.h"
+#include "texture2d.h"

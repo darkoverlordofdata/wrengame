@@ -1,5 +1,6 @@
 #pragma once
 #include <stdlib.h>
+#include <stdbool.h>
 #include <assert.h>
 #include <string.h>
 #include "dark.h"
@@ -9,7 +10,7 @@
 Type (MapItem) {
     MapItem *next;
     char *key;
-    void *value;
+    Object* value;
 };
 
 Type (Map)
@@ -26,11 +27,11 @@ static inline Map* MapNew(void);
 Method void Dispose(Map*);
 
 /* insert a new key-value pair into an existing dictionary */
-Method void Insert(Map*, const char *key, void *value);
+Method void Insert(Map*, const char *key, Object* value);
 
 /* return the most recently inserted value associated with a key */
 /* or 0 if no matching key is present */
-Method void *Search(Map*, const char *key);
+Method Object* Search(Map*, const char *key);
 
 /* delete the most recently inserted record with the given key */
 /* if there is no such record, has no effect */
@@ -138,7 +139,7 @@ static inline void grow(Map* d)
 
 /* insert a new key-value pair into an existing dictionary */
 /* value is owned by the caller and not copied */
-Method void Insert(Map* d, const char *key, void *value)
+Method void Insert(Map* d, const char *key, Object* value)
 {
     MapItem *e;
     unsigned long h;
@@ -169,7 +170,7 @@ Method void Insert(Map* d, const char *key, void *value)
 
 /* return the most recently inserted value associated with a key */
 /* or 0 if no matching key is present */
-Method void * Search(Map* d, const char *key)
+Method Object* Search(Map* d, const char *key)
 {
     MapItem *e;
 

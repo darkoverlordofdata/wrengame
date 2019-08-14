@@ -91,7 +91,7 @@ wren_BindForeignClass( WrenVM* vm,
     methods.allocate = nullptr; 
     methods.finalize = nullptr;
 
-    Class* meta = GetMetaData();
+    Script* meta = GetMetaData();
 
     for (int i=0; meta[i].module != nullptr; i++) {
         if (strcmp(module, meta[i].module) != 0) continue;
@@ -114,7 +114,7 @@ wren_BindForeignMethod( WrenVM* vm,
                         bool isStatic, 
                         const char* signature) 
 {
-    Class* meta = GetMetaData();
+    Script* meta = GetMetaData();
 
     for (int i=0; meta[i].module != nullptr; i++) {
         if (strcmp(module, meta[i].module) != 0) continue;

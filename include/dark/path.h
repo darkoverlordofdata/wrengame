@@ -1,9 +1,69 @@
+#pragma once
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// Path manipulation functions.
 
-#include "path.h"
+typedef struct
+{
+  // Dynamically allocated array of characters.
+  char* chars;
+
+  // The number of characters currently in use in [chars], not including the
+  // null terminator.
+  size_t length;
+
+  // Size of the allocated [chars] buffer.
+  size_t capacity;
+} Path;
+
+// Categorizes what form a path is.
+typedef enum
+{
+  // An absolute path, starting with "/" on POSIX systems, a drive letter on
+  // Windows, etc.
+  PATH_TYPE_ABSOLUTE,
+  
+  // An explicitly relative path, starting with "./" or "../".
+  PATH_TYPE_RELATIVE,
+  
+  // A path that has no leading prefix, like "foo/bar".
+  PATH_TYPE_SIMPLE,
+} PathType;
+
+static inline PathType pathType(const char* path);
+
+// Creates a new empty path.
+static inline Path* pathNew(const char* string);
+
+// Releases the method associated with [path].
+static inline void pathFree(Path* path);
+
+// Strips off the last component of the path name.
+static inline void pathDirName(Path* path);
+
+// Strips off the file extension from the last component of the path.
+static inline void pathRemoveExtension(Path* path);
+
+// Appends [string] to [path].
+static inline void pathJoin(Path* path, const char* string);
+
+// Appends [c] to the path, growing the buffer if needed.
+static inline void pathAppendChar(Path* path, char c);
+
+// Appends [string] to the path, growing the buffer if needed.
+static inline void pathAppendString(Path* path, const char* string);
+
+// Simplifies the path string as much as possible.
+//
+// Applies and removes any "." or ".." components, collapses redundant "/"
+// characters, and normalizes all path separators to "/".
+static inline void pathNormalize(Path* path);
+
+// Allocates a new string exactly the right length and copies this path to it.
+static inline char* pathToString(Path* path);
+
 
 // The maximum number of components in a path. We can't normalize a path that
 // contains more than this number of parts. The number here assumes a max path
@@ -16,7 +76,7 @@ typedef struct {
   const char* end;
 } Slice;
 
-static void ensureCapacity(Path* path, size_t capacity)
+static inline void ensureCapacity(Path* path, size_t capacity)
 {
   // Capacity always needs to be one greater than the actual length to have
   // room for the null byte, which is stored in the buffer, but not counted in
@@ -34,7 +94,7 @@ static void ensureCapacity(Path* path, size_t capacity)
   path->capacity = newCapacity;
 }
 
-static void appendSlice(Path* path, Slice slice)
+static inline void appendSlice(Path* path, Slice slice)
 {
   size_t length = slice.end - slice.start;
   ensureCapacity(path, path->length + length);
@@ -43,7 +103,7 @@ static void appendSlice(Path* path, Slice slice)
   path->chars[path->length] = '\0';
 }
 
-static bool isSeparator(char c)
+static inline bool isSeparator(char c)
 {
   // Slash is a separator on POSIX and Windows.
   if (c == '/') return true;
@@ -57,7 +117,7 @@ static bool isSeparator(char c)
 }
 
 #ifdef _WIN32
-static bool isDriveLetter(char c)
+static inline bool isDriveLetter(char c)
 {
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
@@ -69,7 +129,7 @@ static bool isDriveLetter(char c)
 // "C:\").
 //
 // If the path is not absolute, returns 0.
-static size_t absolutePrefixLength(const char* path)
+static inline size_t absolutePrefixLength(const char* path)
 {
 #ifdef _WIN32
   // Drive letter.
@@ -97,7 +157,7 @@ static size_t absolutePrefixLength(const char* path)
   return 0;
 }
 
-PathType pathType(const char* path)
+static inline PathType pathType(const char* path)
 {
   if (absolutePrefixLength(path) > 0) return PATH_TYPE_ABSOLUTE;
 
@@ -112,7 +172,7 @@ PathType pathType(const char* path)
   return PATH_TYPE_SIMPLE;
 }
 
-Path* pathNew(const char* string)
+static inline Path* pathNew(const char* string)
 {
   Path* path = (Path*)malloc(sizeof(Path));
   path->chars = (char*)malloc(1);
@@ -125,13 +185,13 @@ Path* pathNew(const char* string)
   return path;
 }
 
-void pathFree(Path* path)
+static inline void pathFree(Path* path)
 {
   if (path->chars) free(path->chars);
   free(path);
 }
 
-void pathDirName(Path* path)
+static inline void pathDirName(Path* path)
 {
   // Find the last path separator.
   for (size_t i = path->length - 1; i < path->length; i--)
@@ -149,7 +209,7 @@ void pathDirName(Path* path)
   path->chars[0] = '\0';
 }
 
-void pathRemoveExtension(Path* path)
+static inline void pathRemoveExtension(Path* path)
 {
   for (size_t i = path->length - 1; i < path->length; i--)
   {
@@ -165,7 +225,7 @@ void pathRemoveExtension(Path* path)
   }
 }
 
-void pathJoin(Path* path, const char* string)
+static inline void pathJoin(Path* path, const char* string)
 {
   if (path->length > 0 && !isSeparator(path->chars[path->length - 1]))
   {
@@ -175,14 +235,14 @@ void pathJoin(Path* path, const char* string)
   pathAppendString(path, string);
 }
 
-void pathAppendChar(Path* path, char c)
+static inline void pathAppendChar(Path* path, char c)
 {
   ensureCapacity(path, path->length + 1);
   path->chars[path->length++] = c;
   path->chars[path->length] = '\0';
 }
 
-void pathAppendString(Path* path, const char* string)
+static inline void pathAppendString(Path* path, const char* string)
 {
   Slice slice;
   slice.start = string;
@@ -190,7 +250,7 @@ void pathAppendString(Path* path, const char* string)
   appendSlice(path, slice);
 }
 
-void pathNormalize(Path* path)
+static inline void pathNormalize(Path* path)
 {
   // Split the path into components.
   Slice components[MAX_COMPONENTS];
@@ -303,7 +363,7 @@ void pathNormalize(Path* path)
   free(result);
 }
 
-char* pathToString(Path* path)
+static inline char* pathToString(Path* path)
 {
   char* string = (char*)malloc(path->length + 1);
   memcpy(string, path->chars, path->length);
