@@ -7,12 +7,20 @@
 #include "shader.h"
 #include "tglm.h"
 
-Type SpriteRenderer 
+Type (SpriteRenderer)
 {
     Shader* mShader; 
     GLuint mQuadVAO;
+};
 
-} SpriteRenderer;
+Method void InitRenderData(SpriteRenderer* this);
+
+Ctor (SpriteRenderer, Shader* shader)
+{
+    this->mShader = shader;
+    InitRenderData(this);
+    return this;   
+}
 
 /**
  * Draw
@@ -97,10 +105,3 @@ Method void Dispose(SpriteRenderer* this)
     free(this);
 }
 
-Ctor SpriteRenderer* SpriteRendererNew(Shader* shader)
-{
-    SpriteRenderer* this = malloc(sizeof(SpriteRenderer));
-    this->mShader = shader;
-    InitRenderData(this);
-    return this;   
-}

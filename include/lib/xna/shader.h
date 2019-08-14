@@ -7,11 +7,16 @@
 #include "wren.h"
 #include "tglm.h"
 
-Type Shader 
+Type (Shader) 
 {
     GLuint Id; 
+};
 
-} Shader;
+Ctor (Shader)
+{
+    return this;
+
+}
 
 /**
  * Use shader
@@ -279,9 +284,3 @@ Method void SetMatrix(
     SetMatrix(this, name, matrix, true);
 }
 
-Ctor Shader* ShaderNew()
-{
-    Shader* this = malloc(sizeof(Shader));
-    return this;
-
-}

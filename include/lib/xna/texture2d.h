@@ -4,23 +4,39 @@
 #include <stdio.h>
 #include <string.h>
 
-Type Texture2D 
+Type (Texture2D)
 {
-        // Holds the ID of the texture object, used for all texture operations to reference to this particlar texture
-        GLuint Id;
-        // Texture image dimensions
-        GLuint Width, Height; // Width and height of loaded image in pixels
-        // Texture Format
-        GLuint Internal_Format; // Format of texture object
-        GLuint Image_Format; // Format of loaded image
-        // Texture configuration
-        GLuint mWrap_S; // Wrapping mode on S axis
-        GLuint mWrap_T; // Wrapping mode on T axis
-        GLuint mFilter_Min; // Filtering mode if texture pixels < screen pixels
-        GLuint mFilter_Mag; // Filtering mode if texture pixels > screen pixels
-        char* mPath;
+    // Holds the ID of the texture object, used for all texture operations to reference to this particlar texture
+    GLuint Id;
+    // Texture image dimensions
+    GLuint Width, Height; // Width and height of loaded image in pixels
+    // Texture Format
+    GLuint Internal_Format; // Format of texture object
+    GLuint Image_Format; // Format of loaded image
+    // Texture configuration
+    GLuint mWrap_S; // Wrapping mode on S axis
+    GLuint mWrap_T; // Wrapping mode on T axis
+    GLuint mFilter_Min; // Filtering mode if texture pixels < screen pixels
+    GLuint mFilter_Mag; // Filtering mode if texture pixels > screen pixels
+    char* mPath;
+};
 
-} Texture2D;
+Ctor (Texture2D, const char* path)
+{
+    // Texture2D* this = alloc(Texture2D);
+    this->mPath = strdup(path);
+    this->Internal_Format = GL_RGB;
+    this->Image_Format = GL_RGB;
+    this->mWrap_S = GL_REPEAT;
+    this->mWrap_T = GL_REPEAT;
+    this->mFilter_Min = GL_LINEAR;
+    this->mFilter_Mag = GL_LINEAR;
+
+    glGenTextures(1, &this->Id);
+    
+    return this;   
+}
+
 
 
 /**
@@ -70,20 +86,3 @@ Method void Dispose(Texture2D* this)
 {
     free(this);
 }
-
-Ctor Texture2D* Texture2DNew(const char* path)
-{
-    Texture2D* this = malloc(sizeof(Texture2D));
-    this->mPath = strdup(path);
-    this->Internal_Format = GL_RGB;
-    this->Image_Format = GL_RGB;
-    this->mWrap_S = GL_REPEAT;
-    this->mWrap_T = GL_REPEAT;
-    this->mFilter_Min = GL_LINEAR;
-    this->mFilter_Mag = GL_LINEAR;
-
-    glGenTextures(1, &this->Id);
-    
-    return this;   
-}
-

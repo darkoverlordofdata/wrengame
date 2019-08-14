@@ -39,16 +39,57 @@ SOFTWARE.
 #define auto __auto_type
 
 /**
- *  MACRO Method
  *  MACRO Type
+ *  MACRO Alloc
+ *  MACRO New
+ *  MACRO Ctor
+ *  MACRO Method
+ *  MACRO Super
  * 
  * Overloadeble multi-methods
  * 
  * requires clang, but then so does emscripten
  */
-#define Method static inline __attribute__((overloadable))
-#define Type typedef struct
-#define Ctor static inline
+#define overload __attribute__((overloadable))
+/**
+ *  MACRO Type
+ *      The instance object
+ */
+#define Type(T)                                                         \
+    typedef struct T T;                                                 \
+    struct T
+
+/**
+ *  MACRO Ctor
+ *      Define the constructor method
+ */
+#define Ctor(T, args...) static inline T* T##New(T* this, ## args)
+
+/**
+ *  MACRO Alloc
+ *      Allocate memory for 'this' struct
+ */
+#define Alloc(T) (T*)malloc(sizeof(T))
+
+/**
+ *  MACRO New
+ *      Allocate and initialize a new object
+ */
+#define new(T, args...) T##New(Alloc(T), ## args)
+
+/**
+ *  MACRO Method
+ *      Allocate and initialize a new object
+ */
+#define Method static inline overload
+
+/**
+ *  MACRO Super
+ *      callback into base class
+ */
+#define Super(T, method) \
+    if (this->base != nullptr) \
+        ##method##((T*)this->base); \
 
 /**
  * Redefine true and false for use with _Generic,

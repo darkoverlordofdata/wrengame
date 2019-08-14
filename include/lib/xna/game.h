@@ -40,8 +40,9 @@
 /**
  * The game type
  */
-Type Game
+Type (Game)
 {
+    void* base;
     SDL_Window *window;
     SDL_GLContext context;
     char* title;
@@ -75,10 +76,9 @@ Type Game
     bool suppressDraw;
     double factor;
     bool *keys;
-} Game;
+};
 
-static inline 
-uint64_t GetTicks() { 
+static inline uint64_t GetTicks() { 
     struct timeval t;     
     gettimeofday(&t, nullptr);
 
@@ -96,7 +96,13 @@ static inline void LogSDLError(const char* msg)
 /**
  * Update
  */
-Method void DoUpdate(Game* this){ }
+Method void DoUpdate(Game* this){
+
+    // Super(Game, DoUpdate);
+
+    if (this->base != nullptr)
+        DoUpdate((Game*)this->base);
+ }
 
 /**
  * Render
@@ -286,9 +292,10 @@ Method void Run(Game* this)
 
 
 /**
- * New Game
+ * Alloc Game
  */
-Ctor Game* GameNew(const char* title, int x, int y, int width, int height, int flags)
+// Constructor Game* Game_init(Game* this, char* title, int x, int y, int width, int height, int flags)
+Ctor(Game, char* title, int x, int y, int width, int height, int flags)
 {
     if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0) {
         LogSDLError("Unable to initialize SDL2");
@@ -303,7 +310,7 @@ Ctor Game* GameNew(const char* title, int x, int y, int width, int height, int f
         printf("Using SDL Vesion %d.%d.%d\n", sversion.major, sversion.minor, sversion.patch);
     }
 
-    Game* this = malloc(sizeof(Game));
+    // Game* this = alloc(Game);
     this->title = strdup(title);
     this->x = x;
     this->y = y;
@@ -393,7 +400,7 @@ WrenApi xna_game_Allocate(WrenVM* vm)
     const int h = wrenGetSlotDouble(vm, 5);
     const int flags = wrenGetSlotDouble(vm, 6);
 
-    *game = GameNew(title, x, y, w, h, flags); 
+    *game = GameNew(nullptr, title, x, y, w, h, flags); 
 }
 
 /**

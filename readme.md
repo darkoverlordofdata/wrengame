@@ -7,36 +7,7 @@ it works in emscripten, too.
 
 link_directories( ${CMAKE_SOURCE_DIR}/lib/ )
 
-average values per 1000 clock ticks show
-very little difference in performance between 
-the native and wrapped native code:
+## I want a new C...
 
-Directly call native:
-elapsed  lerp     lag
---------------------------
-0.002460 0.075523 0.001259
-0.003702 0.108497 0.001809
-0.002157 0.061828 0.001031
-0.001924 0.058761 0.000980
-0.001912 0.053835 0.000897
-0.001951 0.058676 0.000978
-0.001862 0.054477 0.000908
-0.001853 0.054923 0.000916
-0.002031 0.060609 0.001010
-0.001931 0.058866 0.000981
-
-Native wrapped in script:
-elapsed  lerp     lag
---------------------------
-0.002406 0.070866 0.001181
-0.002019 0.059684 0.000995
-0.002003 0.060857 0.001014
-0.001799 0.052244 0.000871
-0.001955 0.056150 0.000936
-0.001970 0.058507 0.000975
-0.001838 0.054033 0.000901
-0.001976 0.057436 0.000957
-0.001878 0.058253 0.000971
-0.001848 0.053812 0.000897
-
-
+Yeah, I said that. Clang gives me __overloadable__ which can emulate
+multi-mehods in C, and creating as a header library gives me 1 file per class.
