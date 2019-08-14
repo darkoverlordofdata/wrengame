@@ -17,6 +17,8 @@
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 
+#include "resourcemanager.h"
+
 #define TicksPerMillisecond  10000.0
 #define MillisecondsPerTick 1.0 / (TicksPerMillisecond)
 
@@ -76,6 +78,7 @@ Type (Game)
     bool suppressDraw;
     double factor;
     bool *keys;
+    ResourceManager resource;
 };
 
 static inline uint64_t GetTicks() { 
@@ -336,6 +339,7 @@ Ctor(Game, char* title, int x, int y, int width, int height, int flags)
     #else
     this->gl_minor_version = 3;
     #endif
+    Init(&this->resource);
 
     /* Request opengl 3.3 context.*/
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, this->gl_major_version);

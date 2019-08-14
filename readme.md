@@ -9,5 +9,8 @@ link_directories( ${CMAKE_SOURCE_DIR}/lib/ )
 
 ## I want a new C...
 
-Yeah, I said that. Clang gives me __overloadable__ which can emulate
-multi-mehods in C, and creating as a header library gives me 1 file per class.
+Yeah, I said that. 
+
+To play with embedding wren script, I need some c code to embed with. I've repurposed the 
+example from DarkSTEP. As it turns out, the runtime was overkill, and needed a horrendus 
+amount of boilerplate. All I really needed was multi-methods.

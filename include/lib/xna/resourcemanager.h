@@ -21,10 +21,17 @@ Type (ResourceManager)
 Method Shader* LoadShaderFromFile(ResourceManager* this, const GLchar *vShaderFile, const GLchar *fShaderFile);
 Method Texture2D* LoadTextureFromFile(ResourceManager* this, const GLchar *file, GLboolean alpha);
 
-Ctor (ResourceManager)
+Method void Init(ResourceManager* this)
 {
     this->Shaders = MapNew();
     this->Textures = MapNew();
+}
+
+Ctor (ResourceManager)
+{
+    // this->Shaders = MapNew();
+    // this->Textures = MapNew();
+    Init(this);
     return this;
 }
 
@@ -35,6 +42,14 @@ Method Dispose(ResourceManager* this)
     free(this);
 }
 
+/**
+ * LoadShader
+ * 
+ * @param vShaderFile path to vertex shader
+ * @param fShaderFile path to fragment shader
+ * @param name to cache as
+ * @returns loaded, compiled and linked shader program
+ */
 Method Shader* LoadShader(
     ResourceManager* this, 
     const GLchar *vShaderFile, 
@@ -45,6 +60,13 @@ Method Shader* LoadShader(
     return Search(this->Shaders, name);
 }
 
+/**
+ * GetShader
+ * 
+ * @param name to retrieve
+ * @returns loaded, compiled and linked shader program
+ * 
+ */
 Method Shader* GetShader(
     ResourceManager* this, 
     const char* name)
@@ -52,6 +74,15 @@ Method Shader* GetShader(
     return Search(this->Shaders, name);    
 }
 
+/**
+ * loadTexture
+ * 
+ * @param file path to texture
+ * @param alpha does the texture have an alpha channel?
+ * @param name to cache as
+ * @returns Texture
+ * 
+ */
 Method Texture2D* LoadTexture(
     ResourceManager* this, 
     const GLchar *file, 
@@ -62,6 +93,13 @@ Method Texture2D* LoadTexture(
     return Search(this->Textures, name);
 }
 
+/**
+ * GetTexture
+ * 
+ * @param name to retrieve
+ * @returns Texture
+ * 
+ */
 Method Texture2D* GetTexture(
     ResourceManager* this, 
     const char* name)
@@ -78,6 +116,14 @@ Method void Clear(ResourceManager* this)
 
 }
 
+/**
+ * loadShaderFromFile
+ * 
+ * @param vShaderFile path to vertex shader
+ * @param fShaderFile path to fragment shader
+ * @returns loaded, compiled and linked shader program
+ * 
+ */
 Method Shader* LoadShaderFromFile(
     ResourceManager* this, 
     const GLchar *vShaderFile, 
@@ -106,6 +152,14 @@ Method Shader* LoadShaderFromFile(
 
 }
 
+/**
+ * loadTextureFromFile
+ * 
+ * @param file path to texture
+ * @param alpha does the texture have an alpha channel?
+ * @returns Texture
+ * 
+ */
 Method Texture2D* LoadTextureFromFile(
     ResourceManager* this, 
     const GLchar *file, 

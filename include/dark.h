@@ -63,7 +63,7 @@ SOFTWARE.
  *  MACRO Ctor
  *      Define the constructor method
  */
-#define Ctor(T, args...) static inline T* T##New(T* this, ## args)
+#define Ctor(T, args...) static inline T* T##_ctor(T* this, ## args)
 
 /**
  *  MACRO Alloc
@@ -75,7 +75,7 @@ SOFTWARE.
  *  MACRO New
  *      Allocate and initialize a new object
  */
-#define new(T, args...) T##New(Alloc(T), ## args)
+#define new(T, args...) T##_ctor(Alloc(T), ## args)
 
 /**
  *  MACRO Method
