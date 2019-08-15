@@ -55,6 +55,7 @@
 #include "dark/collections/vector.h"
 #include "dark/collections/map.h"
 #include "dark/collections/list.h"
+#include "dark/types.h"
 #include "dark/path.h"
 #include "dark/tglm.h"
 

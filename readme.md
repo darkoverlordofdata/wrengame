@@ -22,6 +22,11 @@ println("%s", Get(m, "foo2"));
 
 Dispose(m);
 
+var xx = $(100);
+println("typeof(xx) = %s", typeof(xx) );
+println("xx = %s", ToString(xx));
+
+
 List* l = new(List);
 
 Add(l, "hello message1");

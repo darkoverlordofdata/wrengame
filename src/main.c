@@ -26,6 +26,11 @@ int main(int argc, const char* argv[])
     Put(m, "foo2", "hello world2");
     println("%s", Get(m, "foo2"));
 
+    var xx = $(100);
+    println("typeof(xx) = %s", typeof(xx) );
+    println("xx = %s", ToString(xx));
+
+
     Dispose(m);
 
     List* l = new(List);
