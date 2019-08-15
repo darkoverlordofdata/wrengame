@@ -14,8 +14,9 @@
 // Container object for holding all state relevant for a single
 // game object entity. Each object in the game likely needs the
 // minimal of state as described within GameObject.
-Type (GameObject)
+type (GameObject)
 {
+    Object*     Isa;
     Vec2        Position;
     Vec2        Size;
     Vec2        Velocity;
@@ -35,7 +36,7 @@ Type (GameObject)
  * @param Sprite to display
  * @param Color tiniting color
  */
-Ctor (GameObject,
+constructor (GameObject,
     char* name,  
     Vec2 Position, 
     Vec2 Size, 
@@ -58,7 +59,7 @@ Ctor (GameObject,
  * 
  * @param renderer to draw sprite with
  */
-Method void Draw(
+method void Draw(
     GameObject* const this, 
     SpriteRenderer* renderer)
 {
@@ -68,7 +69,7 @@ Method void Draw(
 /**
  * ToString
  */
-Method char* ToString(const GameObject* const this)
+method char* ToString(const GameObject* const this)
 {
     return "GameObject";
 } 

@@ -41,9 +41,11 @@
 
 
 #include "dark/core.h"
-// #include "dark/array.h"
-// #include "dark/either.h"
+#include "dark/polyfill.h"
+#include "dark/either.h"
+#include "dark/vector.h"
 #include "dark/map.h"
+#include "dark/list.h"
 #include "dark/path.h"
 #include "dark/tglm.h"
 

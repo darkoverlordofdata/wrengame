@@ -13,7 +13,7 @@
 
 /// GameLevel holds all Tiles as part of a Breakout level and 
 /// hosts functionality to Load/render levels from the harddisk.
-Type (GameLevel)
+type (GameLevel)
 {
     // DSArray* Bricks;
 };
@@ -21,7 +21,8 @@ Type (GameLevel)
 /**
  * GameLevel
  */
-Ctor (GameLevel, 
+constructor (GameLevel, 
+    Object* Isa;
     const GLchar *file, 
     int levelWidth, 
     int levelHeight)
@@ -40,7 +41,7 @@ Ctor (GameLevel,
  * @param levelHeight of level in tiles
  * 
  */
-Method GameLevel* Load(
+method GameLevel* Load(
     GameLevel* const this, 
     const GLchar *file, 
     int levelWidth, 
@@ -84,7 +85,7 @@ Method GameLevel* Load(
  * @param renderer to use
  * 
  */
-Method void Draw(
+method void Draw(
     GameLevel* const this, 
     SpriteRenderer* renderer)
 {
@@ -102,7 +103,7 @@ Method void Draw(
  * @returns true when complete
  * 
  */
-Method bool IsCompleted(GameLevel* const this)
+method bool IsCompleted(GameLevel* const this)
 {
     for (int i = 0; i < Length(this->Bricks); i++)
     {
@@ -175,7 +176,7 @@ static void init(
 /**
  * ToString
  */
-Method char* ToString(const GameLevel* const this)
+method char* ToString(const GameLevel* const this)
 {
     return "GameLevel";
 }

@@ -5,21 +5,22 @@
 #include <string.h>
 #include "dark.h"
 
-Type (Shader) 
+type (Shader) 
 {
+    Object* Isa;
     GLuint Id; 
 };
 
-Ctor (Shader)
+constructor (Shader)
 {
+    this->Isa = nullptr;
     return this;
-
 }
 
 /**
  * Use shader
  */
-Method Shader* Use(Shader* this)
+method Shader* Use(Shader* this)
 {
     glUseProgram(this->Id);
     return this;
@@ -30,7 +31,7 @@ Method Shader* Use(Shader* this)
  * 
  * Checks if compilation or linking failed and if so, print the error logs
  */
-Method void CheckCompileErrors(
+method void CheckCompileErrors(
     Shader* this, 
     GLuint object, 
     char* type)
@@ -43,7 +44,7 @@ Method void CheckCompileErrors(
         if (!success)
         {
             glGetShaderInfoLog(object, 1024, NULL, infoLog);
-            printf("| ERROR::SHADER: Compile-time error: Type: %s\n%s\n", type, infoLog);
+            printf("| ERROR::SHADER: Compile-time error: type: %s\n%s\n", type, infoLog);
             printf(" -- --------------------------------------------------- --\n");
         }
     }
@@ -53,7 +54,7 @@ Method void CheckCompileErrors(
         if (!success)
         {
             glGetProgramInfoLog(object, 1024, NULL, infoLog);
-            printf("| ERROR::SHADER: Link-time error: Type: %s\n%s\n", type, infoLog);
+            printf("| ERROR::SHADER: Link-time error: type: %s\n%s\n", type, infoLog);
             printf(" -- --------------------------------------------------- --\n");
         }
     }
@@ -66,7 +67,7 @@ Method void CheckCompileErrors(
  * @param fragmentSource fragment shader source code
  * 
  */
-Method void Compile(
+method void Compile(
     Shader* this, 
     const GLchar* vertexSource, 
     const GLchar* fragmentSource, 
@@ -99,7 +100,7 @@ Method void Compile(
 
 } 
 
-Method void SetFloat(
+method void SetFloat(
     Shader* this, 
     const GLchar *name, 
     GLfloat value, 
@@ -110,7 +111,7 @@ Method void SetFloat(
     glUniform1f(glGetUniformLocation(this->Id, name), value);
 }
 
-Method void SetFloat(
+method void SetFloat(
     Shader* this, 
     const GLchar *name, 
     GLfloat value)
@@ -118,7 +119,7 @@ Method void SetFloat(
     SetFloat(this, name, value, true);
 }
 
-Method void SetInteger(
+method void SetInteger(
     Shader* this, 
     const GLchar *name, 
     GLint value, 
@@ -129,7 +130,7 @@ Method void SetInteger(
     glUniform1i(glGetUniformLocation(this->Id, name), value);
 }
 
-Method void SetInteger(
+method void SetInteger(
     Shader* this, 
     const GLchar *name, 
     GLint value)
@@ -137,7 +138,7 @@ Method void SetInteger(
     SetInteger(this, name, value, true);
 }
 
-Method void SetVector2(
+method void SetVector2(
     Shader* this, 
     const GLchar *name, 
     GLfloat x, 
@@ -149,7 +150,7 @@ Method void SetVector2(
     glUniform2f(glGetUniformLocation(this->Id, name), x, y);
 }
 
-Method void SetVector2(
+method void SetVector2(
     Shader* this, 
     const GLchar *name, 
     GLfloat x, 
@@ -158,7 +159,7 @@ Method void SetVector2(
     SetVector2(this, name, x, y, true);
 }
 
-Method void SetVector2(
+method void SetVector2(
     Shader* this, 
     const GLchar *name, 
     const Vec2 value, 
@@ -169,7 +170,7 @@ Method void SetVector2(
     glUniform2f(glGetUniformLocation(this->Id, name), value.x, value.y);
 }
 
-Method void SetVector2(
+method void SetVector2(
     Shader* this, 
     const GLchar *name, 
     const Vec2 value)
@@ -177,7 +178,7 @@ Method void SetVector2(
     SetVector2(this, name, value, true);
 }
 
-Method void SetVector3(
+method void SetVector3(
     Shader* this, 
     const GLchar *name, 
     GLfloat x, 
@@ -190,7 +191,7 @@ Method void SetVector3(
     glUniform3f(glGetUniformLocation(this->Id, name), x, y, z);
 }
 
-Method void SetVector3(
+method void SetVector3(
     Shader* this, 
     const GLchar *name, 
     GLfloat x, 
@@ -200,7 +201,7 @@ Method void SetVector3(
     SetVector3(this, name, x, y, z, true);
 }
 
-Method void SetVector3(
+method void SetVector3(
     Shader* this, 
     const GLchar *name, 
     const Vec3* value, 
@@ -211,7 +212,7 @@ Method void SetVector3(
     glUniform3f(glGetUniformLocation(this->Id, name), value->x, value->y, value->z);
 }
 
-Method void SetVector3(
+method void SetVector3(
     Shader* this, 
     const GLchar *name, 
     const Vec3* value)
@@ -219,7 +220,7 @@ Method void SetVector3(
     SetVector3(this, name, value, true);
 }
 
-Method void SetVector4(
+method void SetVector4(
     Shader* this, 
     const GLchar *name,
     GLfloat x, 
@@ -233,7 +234,7 @@ Method void SetVector4(
     glUniform4f(glGetUniformLocation(this->Id, name), x, y, z, w);
 }
 
-Method void SetVector4(
+method void SetVector4(
     Shader* this, 
     const GLchar *name,
     GLfloat x, 
@@ -244,7 +245,7 @@ Method void SetVector4(
     SetVector4(this, name, x, y, z, w, true);
 
 }
-Method void SetVector4(
+method void SetVector4(
     Shader* this, 
     const GLchar *name, 
     const Vec4 value, 
@@ -255,7 +256,7 @@ Method void SetVector4(
     glUniform4f(glGetUniformLocation(this->Id, name), value.x, value.y, value.z, value.w);
 }
 
-Method void SetVector4(
+method void SetVector4(
     Shader* this, 
     const GLchar *name, 
     const Vec4 value)
@@ -263,7 +264,7 @@ Method void SetVector4(
     SetVector4(this, name, value, true);
 }
 
-Method void SetMatrix(
+method void SetMatrix(
     Shader* this, 
     const GLchar *name, 
     const Mat* matrix, 
@@ -274,7 +275,7 @@ Method void SetMatrix(
     glUniformMatrix4fv(glGetUniformLocation(this->Id, name), 1, GL_FALSE, (GLfloat*)matrix);
 }
 
-Method void SetMatrix(
+method void SetMatrix(
     Shader* this, 
     const GLchar *name, 
     const Mat* matrix)

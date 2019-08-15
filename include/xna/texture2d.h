@@ -3,9 +3,11 @@
 #include <GLES3/gl3.h>
 #include <stdio.h>
 #include <string.h>
+#include "dark.h"
 
-Type (Texture2D)
+type (Texture2D)
 {
+    Object* Isa;
     // Holds the ID of the texture object, used for all texture operations to reference to this particlar texture
     GLuint Id;
     // Texture image dimensions
@@ -21,9 +23,9 @@ Type (Texture2D)
     char* mPath;
 };
 
-Ctor (Texture2D, const char* path)
+constructor (Texture2D, const char* path)
 {
-    // Texture2D* this = alloc(Texture2D);
+    this->Isa = nullptr;
     this->mPath = strdup(path);
     this->Internal_Format = GL_RGB;
     this->Image_Format = GL_RGB;
@@ -47,7 +49,7 @@ Ctor (Texture2D, const char* path)
  * @param data bitmap data
  * 
  */
-Method void Generate(
+method void Generate(
     Texture2D* this, 
     GLuint width, 
     GLuint height, 
@@ -72,7 +74,7 @@ Method void Generate(
  * 
  * binds the texture to GL
  */
-Method void Bind(Texture2D* this)
+method void Bind(Texture2D* this)
 {
     glBindTexture(GL_TEXTURE_2D, this->Id);    
 }
@@ -82,7 +84,7 @@ Method void Bind(Texture2D* this)
  * 
  * release resources
  */
-Method void Dispose(Texture2D* this)
+method void Dispose(Texture2D* this)
 {
     free(this);
 }

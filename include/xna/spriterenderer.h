@@ -7,16 +7,18 @@
 #include "shader.h"
 #include "dark.h"
 
-Type (SpriteRenderer)
+type (SpriteRenderer)
 {
+    Object* Isa;
     Shader* mShader; 
     GLuint mQuadVAO;
 };
 
-Method void InitRenderData(SpriteRenderer* this);
+method void InitRenderData(SpriteRenderer* this);
 
-Ctor (SpriteRenderer, Shader* shader)
+constructor (SpriteRenderer, Shader* shader)
 {
+    this->Isa = nullptr;
     this->mShader = shader;
     InitRenderData(this);
     return this;   
@@ -32,7 +34,7 @@ Ctor (SpriteRenderer, Shader* shader)
  * @param color to tint
  * 
  */
-Method void Draw(
+method void Draw(
     SpriteRenderer* this, 
     Texture2D* texture, 
     Vec2 position, 
@@ -71,7 +73,7 @@ Method void Draw(
 }
 
 
-Method void InitRenderData(SpriteRenderer* this)
+method void InitRenderData(SpriteRenderer* this)
 {
     // Configure VAO/VBO
     GLuint VBO;
@@ -99,7 +101,7 @@ Method void InitRenderData(SpriteRenderer* this)
     glBindVertexArray(0);
 }          
 
-Method void Dispose(SpriteRenderer* this)
+method void Dispose(SpriteRenderer* this)
 {
     glDeleteVertexArrays(1, &this->mQuadVAO);
     free(this);

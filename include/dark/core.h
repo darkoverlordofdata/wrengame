@@ -32,7 +32,6 @@ SOFTWARE.
 #define nullptr NULL 
 #endif
 
-typedef struct Object Object;
 
 /** 
  * c11 has type inference 
@@ -41,11 +40,11 @@ typedef struct Object Object;
 #define auto __auto_type
 
 /**
- *  MACRO Type
- *  MACRO Alloc
+ *  MACRO type
+ *  MACRO alloc
  *  MACRO New
- *  MACRO Ctor
- *  MACRO Method
+ *  MACRO constructor
+ *  MACRO method
  *  MACRO Super
  * 
  * Overloadeble multi-methods
@@ -54,44 +53,50 @@ typedef struct Object Object;
  */
 #define overload __attribute__((overloadable))
 /**
- *  MACRO Type
+ *  MACRO type
  *      The instance object
  */
-#define Type(T)                                                         \
+#define type(T)                                                         \
     typedef struct T T;                                                 \
     struct T
 
 /**
- *  MACRO Ctor
+ *  MACRO constructor
  *      Define the constructor method
  */
-#define Ctor(T, args...) static inline T* T##_ctor(T* this, ## args)
+#define constructor(T, args...) static inline T* T##_ctor(T* this, ## args)
 
 /**
- *  MACRO Alloc
+ *  MACRO alloc
  *      Allocate memory for 'this' struct
  */
-#define Alloc(T) (T*)malloc(sizeof(T))
+#define alloc(T) (T*)malloc(sizeof(T))
 
 /**
  *  MACRO New
  *      Allocate and initialize a new object
  */
-#define new(T, args...) T##_ctor(Alloc(T), ## args)
+#define new(T, args...) T##_ctor(alloc(T), ## args)
 
 /**
- *  MACRO Method
- *      Allocate and initialize a new object
+ *  MACRO function
+ *      All functions are static inline
  */
-#define Method static inline overload
+#define proc static inline
+/**
+ *  MACRO method
+ *      Methods are overideable functions
+ */
+#define method proc overload
+
 
 /**
- *  MACRO Super
+ *  MACRO super
  *      callback into base class
  */
-#define Super(T, method) \
-    if (this->base != nullptr) \
-        ##method##((T*)this->base); \
+#define super(T, method)                                                \
+    if (this->Isa != nullptr)                                           \
+        ##method##((T*)this->Isa);                                      \
 
 /**
  * Redefine true and false for use with _Generic,
@@ -126,34 +131,3 @@ typedef struct Object Object;
     (_a > _b) ? _a : _b;                                                \
 })
 
-#ifndef strdup
-static inline char* strdup(const char* s) {
-    size_t len = strlen(s)+1;
-    void* new = malloc(len);
-    if (new == NULL) return NULL;
-    return (char*)memcpy(new, s, len);
-}
-#endif
-
-
-/**
- * Bind Wren Script api to native functions
- */
-typedef struct WrenMethod
-{
-    char* name;
-    void* addr;
-
-} WrenMethod;
-
-typedef struct Script 
-{
-    char* module;
-    char* className;
-    void* allocate;
-    void* finalize;
-    WrenMethod methods[100];
-
-} Script;
-
-#define WrenApi static inline void

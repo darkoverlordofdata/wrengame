@@ -59,7 +59,7 @@ static inline void io_path_Cwd(WrenVM* vm)
     wrenSetSlotString(vm, 0, cwd);
 }
 /**
- *  io/path::Type
+ *  io/path::type
  * 
  *  Categorizes what form a path is.
  */

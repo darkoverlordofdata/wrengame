@@ -6,6 +6,28 @@
 #include "lib/io/io.h"
 #include "lib/xna/xna.h"
 
+/**
+ * Bind Wren Script api to native functions
+ */
+typedef struct WrenMethod
+{
+    char* name;
+    void* addr;
+
+} WrenMethod;
+
+typedef struct Script 
+{
+    char* module;
+    char* className;
+    void* allocate;
+    void* finalize;
+    WrenMethod methods[100];
+
+} Script;
+
+#define WrenApi static inline void
+
 static inline Script* GetMetaData()
 {
     /**
@@ -20,7 +42,7 @@ static inline Script* GetMetaData()
                 { "+Relative",              io_path_Relative },
                 { "+Simple",                io_path_Simple },
                 { "+Cwd",                   io_path_Cwd },
-                { "+Type(_)",               io_path_Type },
+                { "+type(_)",               io_path_Type },
                 { "DirName()",              io_path_DirName },
                 { "RemoveExtension()",      io_path_RemoveExtension }, 
                 { "Join(_)",                io_path_Join },

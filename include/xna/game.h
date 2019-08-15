@@ -40,9 +40,9 @@
 /**
  * The game type
  */
-Type (Game)
+type (Game)
 {
-    void* base;
+    Object* Isa;
     SDL_Window *window;
     SDL_GLContext context;
     char* title;
@@ -95,20 +95,115 @@ static inline void LogSDLError(const char* msg)
 }
 
 /**
+ * alloc Game
+ */
+// Constructor Game* Game_init(Game* this, char* title, int x, int y, int width, int height, int flags)
+constructor(Game, char* title, int x, int y, int width, int height, int flags)
+{
+    this->Isa = nullptr;
+    this->title = strdup(title);
+    this->x = x;
+    this->y = y;
+    this->width = width;
+    this->height = height;
+    this->flags = flags;
+
+    if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0) {
+        LogSDLError("Unable to initialize SDL2");
+        return nullptr;
+    }
+    SDL_version sversion;
+    SDL_GetVersion(&sversion);
+    int version = 100 * sversion.major + 10 * sversion.minor + sversion.patch;
+    if (version <= 204) {
+        printf("Please use SDL 2.0.5 or higher.\n");
+    } else {
+        printf("Using SDL Vesion %d.%d.%d\n", sversion.major, sversion.minor, sversion.patch);
+    }
+    
+    this->frameSkip = 0;
+    this->isRunning = false;
+    this->previousTicks = 0;
+    this->isFixedTimeStep = true;
+    this->shouldExit = false;
+    this->suppressDraw = false;
+    this->maxElapsedTime = 500 * TicksPerMillisecond; 
+    this->targetElapsedTime = 166667;
+    this->accumulatedElapsedTime = 0;
+    this->currentTime = GetTicks();
+    this->keys = calloc(256, sizeof(bool));
+    this->sdlVersion = version;
+    this->gl_major_version = 3;
+    #ifdef __EMSCRIPTEN__
+    this->gl_minor_version = 0;
+    #else
+    this->gl_minor_version = 3;
+    #endif
+    Init(&this->resource);
+
+    /* Request opengl 3.3 context.*/
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, this->gl_major_version);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, this->gl_minor_version);
+
+    /* Turn on double buffering with a 24bit Z buffer.
+     * You may need to change this to 16 or 32 for your system */
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+    this->window = SDL_CreateWindow(this->title, 
+                                    this->x, 
+                                    this->y, 
+                                    this->width, 
+                                    this->height, 
+                                    SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
+    this->context = SDL_GL_CreateContext(this->window);
+
+    #ifdef __EMSCRIPTEN__
+    const int img_flags = IMG_INIT_PNG;
+    #else
+    const int img_flags = IMG_INIT_PNG | IMG_INIT_JPG;
+    #endif
+    if (IMG_Init(img_flags) != img_flags) { 
+        LogSDLError("Init image");
+    }
+    TTF_Init();
+    if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048) == -1) {
+        LogSDLError("Init mixer");
+    }
+
+    #ifndef __EMSCRIPTEN__
+    // Load OpenGL EntryPoints for desktop
+    glewExperimental = GL_TRUE;
+    glewInit();
+    glGetError(); // Call it once to catch glewInit() bug, all other errors are now from our application.
+    #endif
+
+    // OpenGL configuration
+    glViewport(0, 0, this->width, this->height);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    return this;
+}
+
+
+
+/**
  * Update
  */
-Method void DoUpdate(Game* this){
+method void DoUpdate(Game* this){
 
     // Super(Game, DoUpdate);
 
-    if (this->base != nullptr)
-        DoUpdate((Game*)this->base);
+    if (this->Isa != nullptr)
+        DoUpdate((Game*)this->Isa);
  }
 
 /**
  * Render
  */
-Method void DoDraw(Game* this) 
+method void DoDraw(Game* this) 
 {
     glClearColor(bgd_r, bgd_g, bgd_b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -118,7 +213,7 @@ Method void DoDraw(Game* this)
 /**
  * HandleEvents
  */
-Method void HandleEvents(Game* this) 
+method void HandleEvents(Game* this) 
 {
     SDL_Event event;
     if (SDL_PollEvent(&event)) 
@@ -150,7 +245,7 @@ Method void HandleEvents(Game* this)
 }
 
 
-Method void Start(Game* this) 
+method void Start(Game* this) 
 {
     printf("Game::Start\n");
     this->isRunning = true;
@@ -159,7 +254,7 @@ Method void Start(Game* this)
 /**
  * Tick
  */
-Method void Tick(Game* this) 
+method void Tick(Game* this) 
 {
     while (true) {
         // Advance the accumulated elapsed time.
@@ -254,7 +349,7 @@ Method void Tick(Game* this)
 /**
  * Dispose
  */
-Method void Dispose(Game* this) 
+method void Dispose(Game* this) 
 {
     SDL_DestroyWindow(this->window);
     free(this->title);
@@ -264,7 +359,7 @@ Method void Dispose(Game* this)
     SDL_Quit();
 }
 
-Method void RunLoop(Game* this)
+method void RunLoop(Game* this)
 {
     HandleEvents(this);
     if (this->keys[SDLK_ESCAPE]) {
@@ -276,13 +371,13 @@ Method void RunLoop(Game* this)
 /**
  * GameLoop
  */
-Method void Run(Game* this) 
+method void Run(Game* this) 
 {
     // this->Initialize(this);
     // this->LoadContent(this);
     Start(this);
 #if __EMSCRIPTEN__
-    emscripten_set_main_loop_arg((em_arg_callback_func)this->RunLoop, (void*)this, -1, 1);
+    emscripten_set_main_loop_arg((em_arg_callback_func)RunLoop, (void*)this, -1, 1);
 #else
     while (this->isRunning) 
     {
@@ -292,96 +387,96 @@ Method void Run(Game* this)
 }
 
 
-/**
- * Alloc Game
- */
-// Constructor Game* Game_init(Game* this, char* title, int x, int y, int width, int height, int flags)
-Ctor(Game, char* title, int x, int y, int width, int height, int flags)
-{
-    if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0) {
-        LogSDLError("Unable to initialize SDL2");
-        return nullptr;
-    }
-    SDL_version sversion;
-    SDL_GetVersion(&sversion);
-    int version = 100 * sversion.major + 10 * sversion.minor + sversion.patch;
-    if (version <= 204) {
-        printf("Please use SDL 2.0.5 or higher.\n");
-    } else {
-        printf("Using SDL Vesion %d.%d.%d\n", sversion.major, sversion.minor, sversion.patch);
-    }
+// /**
+//  * alloc Game
+//  */
+// // Constructor Game* Game_init(Game* this, char* title, int x, int y, int width, int height, int flags)
+// constructor(Game, char* title, int x, int y, int width, int height, int flags)
+// {
+//     if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0) {
+//         LogSDLError("Unable to initialize SDL2");
+//         return nullptr;
+//     }
+//     SDL_version sversion;
+//     SDL_GetVersion(&sversion);
+//     int version = 100 * sversion.major + 10 * sversion.minor + sversion.patch;
+//     if (version <= 204) {
+//         printf("Please use SDL 2.0.5 or higher.\n");
+//     } else {
+//         printf("Using SDL Vesion %d.%d.%d\n", sversion.major, sversion.minor, sversion.patch);
+//     }
 
-    // Game* this = alloc(Game);
-    this->title = strdup(title);
-    this->x = x;
-    this->y = y;
-    this->width = width;
-    this->height = height;
-    this->flags = flags;
+//     this->Isa = nullptr;
+//     this->title = strdup(title);
+//     this->x = x;
+//     this->y = y;
+//     this->width = width;
+//     this->height = height;
+//     this->flags = flags;
     
-    this->frameSkip = 0;
-    this->isRunning = false;
-    this->previousTicks = 0;
-    this->isFixedTimeStep = true;
-    this->shouldExit = false;
-    this->suppressDraw = false;
-    this->maxElapsedTime = 500 * TicksPerMillisecond; 
-    this->targetElapsedTime = 166667;
-    this->accumulatedElapsedTime = 0;
-    this->currentTime = GetTicks();
-    this->keys = calloc(256, sizeof(bool));
-    this->sdlVersion = version;
-    this->gl_major_version = 3;
-    #ifdef __EMSCRIPTEN__
-    this->gl_minor_version = 0;
-    #else
-    this->gl_minor_version = 3;
-    #endif
-    Init(&this->resource);
+//     this->frameSkip = 0;
+//     this->isRunning = false;
+//     this->previousTicks = 0;
+//     this->isFixedTimeStep = true;
+//     this->shouldExit = false;
+//     this->suppressDraw = false;
+//     this->maxElapsedTime = 500 * TicksPerMillisecond; 
+//     this->targetElapsedTime = 166667;
+//     this->accumulatedElapsedTime = 0;
+//     this->currentTime = GetTicks();
+//     this->keys = calloc(256, sizeof(bool));
+//     this->sdlVersion = version;
+//     this->gl_major_version = 3;
+//     #ifdef __EMSCRIPTEN__
+//     this->gl_minor_version = 0;
+//     #else
+//     this->gl_minor_version = 3;
+//     #endif
+//     Init(&this->resource);
 
-    /* Request opengl 3.3 context.*/
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, this->gl_major_version);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, this->gl_minor_version);
+//     /* Request opengl 3.3 context.*/
+//     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, this->gl_major_version);
+//     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, this->gl_minor_version);
 
-    /* Turn on double buffering with a 24bit Z buffer.
-     * You may need to change this to 16 or 32 for your system */
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+//     /* Turn on double buffering with a 24bit Z buffer.
+//      * You may need to change this to 16 or 32 for your system */
+//     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+//     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-    this->window = SDL_CreateWindow(this->title, 
-                                    this->x, 
-                                    this->y, 
-                                    this->width, 
-                                    this->height, 
-                                    SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
-    this->context = SDL_GL_CreateContext(this->window);
+//     this->window = SDL_CreateWindow(this->title, 
+//                                     this->x, 
+//                                     this->y, 
+//                                     this->width, 
+//                                     this->height, 
+//                                     SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
+//     this->context = SDL_GL_CreateContext(this->window);
 
-    #ifdef __EMSCRIPTEN__
-    const int img_flags = IMG_INIT_PNG;
-    #else
-    const int img_flags = IMG_INIT_PNG | IMG_INIT_JPG;
-    #endif
-    if (IMG_Init(img_flags) != img_flags) { 
-        LogSDLError("Init image");
-    }
-    TTF_Init();
-    if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048) == -1) {
-        LogSDLError("Init mixer");
-    }
+//     #ifdef __EMSCRIPTEN__
+//     const int img_flags = IMG_INIT_PNG;
+//     #else
+//     const int img_flags = IMG_INIT_PNG | IMG_INIT_JPG;
+//     #endif
+//     if (IMG_Init(img_flags) != img_flags) { 
+//         LogSDLError("Init image");
+//     }
+//     TTF_Init();
+//     if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048) == -1) {
+//         LogSDLError("Init mixer");
+//     }
 
-    #ifndef __EMSCRIPTEN__
-    // Load OpenGL EntryPoints for desktop
-    glewExperimental = GL_TRUE;
-    glewInit();
-    glGetError(); // Call it once to catch glewInit() bug, all other errors are now from our application.
-    #endif
+//     #ifndef __EMSCRIPTEN__
+//     // Load OpenGL EntryPoints for desktop
+//     glewExperimental = GL_TRUE;
+//     glewInit();
+//     glGetError(); // Call it once to catch glewInit() bug, all other errors are now from our application.
+//     #endif
 
-    // OpenGL configuration
-    glViewport(0, 0, this->width, this->height);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//     // OpenGL configuration
+//     glViewport(0, 0, this->width, this->height);
+//     glEnable(GL_CULL_FACE);
+//     glEnable(GL_BLEND);
+//     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    return this;
-}
+//     return this;
+// }
 

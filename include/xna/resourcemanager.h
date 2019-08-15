@@ -8,34 +8,56 @@
 #include "shader.h"
 
 
-
-Type (ResourceManager)
+/**
+ * ReadTextFile
+ * 
+ * @param path path to file
+ * @returns string with file contents
+ * 
+ */
+static char* rdbuf(FILE* f)
 {
+    fseek(f, 0L, SEEK_END);
+    long s = ftell(f);
+    rewind(f);
+    char* buf = calloc(1, s+1);
+    buf[s] = '\0';
+
+    if (buf != nullptr)
+    {
+        fread(buf, s, 1, f);
+        return buf;
+    }
+    return buf;
+}
+
+type (ResourceManager)
+{
+    Object* Isa;
     Map* Shaders;
     Map* Textures;
 };
 
-Method Shader* LoadShaderFromFile(ResourceManager* this, const GLchar *vShaderFile, const GLchar *fShaderFile);
-Method Texture2D* LoadTextureFromFile(ResourceManager* this, const GLchar *file, GLboolean alpha);
+method Shader* LoadShaderFromFile(ResourceManager* this, const GLchar *vShaderFile, const GLchar *fShaderFile);
+method Texture2D* LoadTextureFromFile(ResourceManager* this, const GLchar *file, GLboolean alpha);
 
-Method void Init(ResourceManager* this)
+method void Init(ResourceManager* this)
 {
-    this->Shaders = MapNew();
-    this->Textures = MapNew();
+    this->Shaders = new(Map);
+    this->Textures = new(Map);
 }
 
-Ctor (ResourceManager)
+constructor (ResourceManager)
 {
-    // this->Shaders = MapNew();
-    // this->Textures = MapNew();
+    this->Isa = nullptr;
     Init(this);
     return this;
 }
 
-Method Dispose(ResourceManager* this)
+method void Dispose(ResourceManager* this)
 {
-    Dispose(this->Shaders, true);
-    Dispose(this->Textures, true);
+    Dispose(this->Shaders);
+    Dispose(this->Textures);
     free(this);
 }
 
@@ -47,14 +69,14 @@ Method Dispose(ResourceManager* this)
  * @param name to cache as
  * @returns loaded, compiled and linked shader program
  */
-Method Shader* LoadShader(
+method Shader* LoadShader(
     ResourceManager* this, 
     const GLchar *vShaderFile, 
     const GLchar *fShaderFile, 
     const char* name)
 {
-    Insert(this->Shaders, name, LoadShaderFromFile(this, vShaderFile, fShaderFile));
-    return Search(this->Shaders, name);
+    Put(this->Shaders, name, LoadShaderFromFile(this, vShaderFile, fShaderFile));
+    return Get(this->Shaders, name);
 }
 
 /**
@@ -64,11 +86,11 @@ Method Shader* LoadShader(
  * @returns loaded, compiled and linked shader program
  * 
  */
-Method Shader* GetShader(
+method Shader* GetShader(
     ResourceManager* this, 
     const char* name)
 {
-    return Search(this->Shaders, name);    
+    return Get(this->Shaders, name);    
 }
 
 /**
@@ -80,14 +102,14 @@ Method Shader* GetShader(
  * @returns Texture
  * 
  */
-Method Texture2D* LoadTexture(
+method Texture2D* LoadTexture(
     ResourceManager* this, 
     const GLchar *file, 
     GLboolean alpha,
     const char* name)
 {
-    Insert(this->Textures, name, LoadTextureFromFile(this, file, alpha));
-    return Search(this->Textures, name);
+    Put(this->Textures, name, LoadTextureFromFile(this, file, alpha));
+    return Get(this->Textures, name);
 }
 
 /**
@@ -97,22 +119,23 @@ Method Texture2D* LoadTexture(
  * @returns Texture
  * 
  */
-Method Texture2D* GetTexture(
+method Texture2D* GetTexture(
     ResourceManager* this, 
     const char* name)
 {
-    return Search(this->Textures, name);    
+    return Get(this->Textures, name);    
 }
 
-Method void Clear(ResourceManager* this)
+method void Clear(ResourceManager* this)
 {
-    Dispose(this->Shaders, true);
-    Dispose(this->Textures, true);
-    this->Shaders = MapNew();
-    this->Textures = MapNew();
+    Dispose(this->Shaders);
+    Dispose(this->Textures);
+    this->Shaders = new(Map);
+    this->Textures = new(Map);
 
 }
 
+static inline char* join(const char* s1, const char* s2) { return nullptr;}
 /**
  * loadShaderFromFile
  * 
@@ -121,7 +144,7 @@ Method void Clear(ResourceManager* this)
  * @returns loaded, compiled and linked shader program
  * 
  */
-Method Shader* LoadShaderFromFile(
+method Shader* LoadShaderFromFile(
     ResourceManager* this, 
     const GLchar *vShaderFile, 
     const GLchar *fShaderFile)
@@ -157,7 +180,7 @@ Method Shader* LoadShaderFromFile(
  * @returns Texture
  * 
  */
-Method Texture2D* LoadTextureFromFile(
+method Texture2D* LoadTextureFromFile(
     ResourceManager* this, 
     const GLchar *file, 
     GLboolean alpha)

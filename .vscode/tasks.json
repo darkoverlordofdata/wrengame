@@ -6,8 +6,9 @@
             "command": "emcc",
             "args": [
                 "src/main.c",
-                "src/path.c",
                 "lib/libwren.bc",
+                "lib/libBlocksRuntime.bc",
+                "-fblocks",
                 "-std=c11",
                 "-I./include",
                 "-O3",
@@ -22,6 +23,7 @@
                 "--preload-file", "wren"
             ],
 
+            // "lib/libBlocksRuntime.bc",
             "problemMatcher": {
                 "owner": "emcc",
                 "fileLocation": ["relative", "${workspaceFolder}"],

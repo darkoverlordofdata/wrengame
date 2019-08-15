@@ -12,7 +12,7 @@
 #include <SDL2/SDL_ttf.h>
 
 // Represents a single particle and its state
-Type (Particle)
+type (Particle)
 {
     Vec2 Position;
     Vec2 Velocity;
@@ -20,12 +20,14 @@ Type (Particle)
     GLfloat Life;
 
     // Particle() : Position(0.0f), Velocity(0.0f), Color(1.0f), Life(0.0f) { }
-} Particle;
+};
 
 // ParticleGenerator acts as a container for rendering a large number of 
 // particles by repeatedly spawning and updating particles and killing 
 // them after a given amount of time.
-Type (ParticleGenerator) {
+type (ParticleGenerator) 
+{
+    Object* Isa;
     Particle* particles;
     GLuint amount;
     Shader* shader;
@@ -41,7 +43,7 @@ Type (ParticleGenerator) {
  * @param amount number of particles to generate
  * 
  */
-Ctor (ParticleGenerator*,
+constructor (ParticleGenerator*,
     Shader* shader, 
     Texture2D* texture, 
     int amount)
@@ -62,7 +64,7 @@ Ctor (ParticleGenerator*,
  * @param offset to display from
  * 
  */
-Method void Update(
+method void Update(
     ParticleGenerator* this, 
     GLfloat dt, 
     GameObject* object, 
@@ -92,7 +94,7 @@ Method void Update(
  * Render all particles
  * 
  */
-Method void Draw(ParticleGenerator* this)
+method void Draw(ParticleGenerator* this)
 {
     // Use additive blending to give it a 'glow' effect
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -184,7 +186,7 @@ static void respawnParticle(
 /**
  * ToString
  */
-Method char* ToString(const ParticleGenerator* const this)
+method char* ToString(const ParticleGenerator* const this)
 {
     return "ParticleGenerator";
 }

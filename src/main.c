@@ -5,40 +5,45 @@
 #include "xna/xna.h"
 // #include "breakout.h"
 
+/**
+ * Extend the List object with an iterator
+ */
+void method ForEach(List* this, void (^iter)(char*))
+{
+    for (var curr = this->head; curr != nullptr; curr = curr->next) {
+        iter(curr->data);
+    }
+}
 
 int main(int argc, const char* argv[])
 {
 
-    Map* d;
     char buf[512];
     int i;
 
-    d = MapNew();
+    Map* m = new(Map);
 
-    Insert(d, "foo", "hello world");
-    puts(Search(d, "foo"));
-    Insert(d, "foo", "hello world2");
-    puts(Search(d, "foo"));
-    Delete(d, "foo");
-    puts(Search(d, "foo"));
-    Delete(d, "foo");
-    assert(Search(d, "foo") == 0);
-    Delete(d, "foo");
+    Put(m, "foo", "hello world");
+    printf("%s\n", Get(m, "foo"));
+    Put(m, "foo2", "hello world2");
+    printf("%s\n", Get(m, "foo2"));
 
-    for (i = 0; i < 10000; i++) {
-        sprintf(buf, "%d", i);
-        Insert(d, buf, buf);
-    }
+    Dispose(m);
 
-    Dispose(d);
-    // return 0;
+    List* l = new(List);
 
-    // Game* game = GameNew("SdL Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-    //                     600, 480, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
+    Add(l, "hello message1");
+    Add(l, "hello message2");
+    Add(l, "hello message3");
+    ForEach(l, ^(char* s) {
+        printf("item = %d) %s\n", Length(s), s);
+    });
+
+    Dispose(l);
 
     Game* game = new(Game, "SdL Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
                         600, 480, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL );
-    // game->Start(game);
+
     Run(game);
     Dispose(game);
 

@@ -15,8 +15,7 @@
   "dependencies": {},
   "source": "src",
   "files": [
-    "src/main.c",
-    "src/path.c"
+    "src/main.c"
   ],
   "packages": [],
   "includes": [
@@ -26,6 +25,7 @@
   "libraries": [
     "m",
     "wren",
+    "BlocksRuntime",
     "SDL2",
     "SDL2_image",
     "SDL2_mixer",
@@ -38,8 +38,13 @@
     "RELEASE_NAME": "wrengame"
   },
   "definitions": [],
-  "symbols": [],
+  "symbols": [
+    "-fblocks"
+  ],
   "copy": "..",
   "vapidir": "/src/vapis",
-  "console": false
+  "console": false,
+  "links": [
+    "lib"
+  ]
 }

@@ -30,7 +30,8 @@ typedef enum  {
 // Breakout holds all game-related state and functionality.
 // Combines all game-related data into a single class for
 // easy access to each of the components and manageability.
-Type (Breakout) {
+type (Breakout) {
+    Object* Isa;
     GameState State;	
     bool Keys[1024];
     GLuint Width;
@@ -39,7 +40,7 @@ Type (Breakout) {
     GLuint Level;    
 };    
 
-Type (Collision) 
+type (Collision) 
 {
     bool first;
     Direction second; 
@@ -69,12 +70,12 @@ Collision* CollisionTuple(bool isTrue, Direction dir, Vec2 vec)
  * @param Height of screen
  * 
  */
-Ctor (Breakout,
+constructor (Breakout,
     int Width, 
     int Height)
 {
 	DSObject_init(this);
-    this->isa = getGameIsa();
+    this->Isa = getGameIsa();
     // DSArray_init()
     this->Levels = new(DSArray, 4);
     this->Level = 0;
@@ -93,12 +94,12 @@ static GameObject* Player;
 static BallObject* Ball;
 
 
-Method void SetKey(Breakout* this, int key, bool value)
+method void SetKey(Breakout* this, int key, bool value)
 {
     this->Keys[key] = value;
 }
 
-Method void SetState(Breakout* this, GameState state)
+method void SetState(Breakout* this, GameState state)
 {
     this->State = state;
 }
@@ -106,7 +107,7 @@ Method void SetState(Breakout* this, GameState state)
 /**
  * Start the game
  */
-Method void Start(Breakout* this)
+method void Start(Breakout* this)
 {
    // Load shaders
     $ResourceManager.LoadShader("shaders/sprite.vs", "shaders/sprite.frag", "sprite");
@@ -145,7 +146,7 @@ Method void Start(Breakout* this)
  * 
  * @param dt deltat time
  */
-Method void Update(Breakout* this, GLfloat dt)
+method void Update(Breakout* this, GLfloat dt)
 {
     // Update objects
     Move(Ball, dt, this->Width);
@@ -167,7 +168,7 @@ Method void Update(Breakout* this, GLfloat dt)
  * 
  * @param dt deltat time
  */
-Method void ProcessInput(Breakout* this, GLfloat dt)
+method void ProcessInput(Breakout* this, GLfloat dt)
 {
     if (this->State == GAME_ACTIVE)
     {
@@ -200,7 +201,7 @@ Method void ProcessInput(Breakout* this, GLfloat dt)
  * Render
  * 
  */
-Method void Render(Breakout* this)
+method void Render(Breakout* this)
 {
     if (this->State == GAME_ACTIVE)
     {
@@ -218,7 +219,7 @@ Method void Render(Breakout* this)
  * ResetLevel
  * 
  */
-Method void ResetLevel(Breakout* this)
+method void ResetLevel(Breakout* this)
 {
     if (this->Level == 0) {
         GameLevel* level = this->Levels->data[0];
@@ -245,7 +246,7 @@ Method void ResetLevel(Breakout* this)
  * ResetPlayer
  * 
  */
-Method void ResetPlayer(Breakout* this)
+method void ResetPlayer(Breakout* this)
 {
     Player->Size = PLAYER_SIZE;
     Player->Position = (Vec2){ this->Width / 2 - PLAYER_SIZE.x / 2, this->Height - PLAYER_SIZE.y };
@@ -255,7 +256,7 @@ Method void ResetPlayer(Breakout* this)
 /**
  * Release game resources
  */
-Method void Dispose(Breakout* this)
+method void Dispose(Breakout* this)
 {
 }
 
@@ -347,7 +348,7 @@ static Collision* CheckCollision(
  * DoCollisions
  * 
  */
-Method void DoCollisions(Breakout* this)
+method void DoCollisions(Breakout* this)
 {
     GameLevel* level = *(this->Levels[this->Level].data);
     DSArray* bricks = level->Bricks;
@@ -415,7 +416,7 @@ Method void DoCollisions(Breakout* this)
 /**
  * ToString
  */
-Method char* ToString(const Breakout* const this)
+method char* ToString(const Breakout* const this)
 {
     return "Breakout";
 }

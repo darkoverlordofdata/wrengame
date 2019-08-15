@@ -15,8 +15,9 @@
 // relevant state data from GameObject. Contains some extra
 // functionality specific to Breakout's ball object that
 // were too specific for within GameObject alone.
-Type (BallObject) 
+type (BallObject) 
 {
+    GameObject* Isa;
     Vec2        Position;
     Vec2        Size;
     Vec2        Velocity;
@@ -39,14 +40,14 @@ Type (BallObject)
  * @param Velocity initial speed of ball
  * @param Sprite to display
  */
-Ctor (BallObject,
+constructor (BallObject,
     Vec2 Position, 
     float Radius, 
     Vec2 Velocity, 
     Texture2D* Sprite)
 {
     Radius = Radius != 0 ? Radius : 12.5f;
-    GameObject_ctor(this, "ball", Position, (Vec2){ Radius*2, Radius*2 }, Sprite, (Vec3){ 1, 1, 1 });
+    this->Isa = GameObject_ctor(this, "ball", Position, (Vec2){ Radius*2, Radius*2 }, Sprite, (Vec3){ 1, 1, 1 });
     this->Velocity = Velocity;
     this->Radius = Radius;
     return this;
@@ -57,7 +58,7 @@ Ctor (BallObject,
  * 
  * @param renderer to draw sprite with
  */
-Method void Draw(BallObject* const this, const SpriteRenderer* renderer)
+method void Draw(BallObject* const this, const SpriteRenderer* renderer)
 {
     Draw(renderer, this->Sprite, this->Position, this->Size, this->Rotation, this->Color);
 }
@@ -70,7 +71,7 @@ Method void Draw(BallObject* const this, const SpriteRenderer* renderer)
  * @param window_width
  * @returns Vec2 new position
  */
-Method void Move(BallObject* const this, const GLfloat dt, const GLuint window_width)
+method void Move(BallObject* const this, const GLfloat dt, const GLuint window_width)
 {
     // If not stuck to player board
     if (!this->Stuck)
@@ -103,7 +104,7 @@ Method void Move(BallObject* const this, const GLfloat dt, const GLuint window_w
  * @param velocity to reset to
  * 
  */
-Method void Reset(BallObject* const this, const Vec2 position, const Vec2 velocity)
+method void Reset(BallObject* const this, const Vec2 position, const Vec2 velocity)
 {
     this->Position = position;
     this->Velocity = velocity;
@@ -113,7 +114,7 @@ Method void Reset(BallObject* const this, const Vec2 position, const Vec2 veloci
 /**
  * ToString
  */
-Method char* ToString(const BallObject*  const this)
+method char* ToString(const BallObject*  const this)
 {
     return "BallObject";
 }
