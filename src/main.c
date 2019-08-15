@@ -18,15 +18,13 @@ void method ForEach(List* this, void (^iter)(char*))
 int main(int argc, const char* argv[])
 {
 
-    char buf[512];
-    int i;
 
     Map* m = new(Map);
 
     Put(m, "foo", "hello world");
-    printf("%s\n", Get(m, "foo"));
+    println("%s", Get(m, "foo"));
     Put(m, "foo2", "hello world2");
-    printf("%s\n", Get(m, "foo2"));
+    println("%s", Get(m, "foo2"));
 
     Dispose(m);
 
@@ -36,7 +34,7 @@ int main(int argc, const char* argv[])
     Add(l, "hello message2");
     Add(l, "hello message3");
     ForEach(l, ^(char* s) {
-        printf("item = %d) %s\n", Length(s), s);
+        println("item = %d) %s", Length(s), s);
     });
 
     Dispose(l);

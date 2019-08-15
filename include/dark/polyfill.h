@@ -25,9 +25,40 @@ SOFTWARE.
 ******************************************************************/
 #pragma once
 
+//  some string related functions that should be in the stdlib
+
 /**
- * strdup
+ * strrstr - Returns a pointer to the first occurrence of str2 
+ * in str1, or a null pointer if str2 is not part of str1.
  * 
+ * @param str string to search in
+ * @param str2 string to search for
+ * @return ptr to the substring
+ */
+#ifndef strrstr
+proc char * strrstr(char *str1, char *str2)
+{
+  size_t slen = strlen(str1);
+  size_t flen = strlen(str2);
+  if (flen > slen) return nullptr;
+
+  for (char* result = str1 + slen - flen; result >= str1; result--)
+  {
+    if (strncmp(result, str2, flen) == 0)
+        return result;
+  }
+  return nullptr;
+}
+#endif
+
+/**
+ * strndup - Returns a pointer to a null-terminated byte string, which 
+ * is a duplicate of the string pointed to by str1. The returned pointer 
+ * must be passed to free to avoid a memory leak.
+ * 
+ * @param str string to duplicate
+ * @param size of the new string
+ * @return ptr to the new string
  */
 #ifndef strdup
 proc char* strdup(const char* s) {
@@ -38,10 +69,86 @@ proc char* strdup(const char* s) {
 }
 #endif
 
-type (Object)
+/**
+ * join strings
+ * 
+ * @param count of strings
+ * @param ... list of char*'s
+ * @returns all strings concantenated together.
+ */
+proc char* STR_JOIN(int count, ...)
 {
-    Object* Isa;
-};
+    
+    int size = 0;
+    va_list args1;
+    va_start(args1, count);
+    va_list args2;
+    va_copy(args2, args1);  
+
+    /**
+     * Caclulate length of the result string
+     */
+    for (int i = 0; i < count; ++i) {
+        char* str = va_arg(args1, char*);
+        size += strlen(str);
+    }
+    va_end(args1);
+    char* result = calloc((size+1),  sizeof(char));
+
+    /**
+     * Now build the result string
+     */
+    for (int i = 0; i < count; ++i) {
+        char* str = va_arg(args2, char*);
+        strcat(result, str);
+    }
+    va_end(args2);
+    return result;
+}
+
+/**
+ * ReadTextFile
+ * 
+ * @param path path to file
+ * @returns string with file contents
+ * 
+ */
+proc char* ReadTextFile(FILE* f)
+{
+    fseek(f, 0L, SEEK_END);
+    long s = ftell(f);
+    rewind(f);
+    char* buf = calloc(1, s+1);
+    buf[s] = '\0';
+
+    if (buf != nullptr)
+    {
+        fread(buf, s, 1, f);
+        return buf;
+    }
+    return buf;
+}
+
+/**
+ * println
+ * 
+ * Writes output to stderr, with end of line.
+ */
+__attribute__((__format__ (__printf__, 1, 2)))
+static inline void println (char* format, ...) {
+
+    va_list args;
+    va_start(args, format);
+    vfprintf(stdout, format, args);
+    va_end(args);
+    fprintf(stdout, "\n");
+}
+
+
+// type (Object)
+// {
+//     Object* Isa;
+// };
 
 /**
  *  Length of string

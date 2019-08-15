@@ -7,30 +7,6 @@
 #include "texture2d.h"
 #include "shader.h"
 
-
-/**
- * ReadTextFile
- * 
- * @param path path to file
- * @returns string with file contents
- * 
- */
-static char* rdbuf(FILE* f)
-{
-    fseek(f, 0L, SEEK_END);
-    long s = ftell(f);
-    rewind(f);
-    char* buf = calloc(1, s+1);
-    buf[s] = '\0';
-
-    if (buf != nullptr)
-    {
-        fread(buf, s, 1, f);
-        return buf;
-    }
-    return buf;
-}
-
 type (ResourceManager)
 {
     Object* Isa;
@@ -135,7 +111,7 @@ method void Clear(ResourceManager* this)
 
 }
 
-static inline char* join(const char* s1, const char* s2) { return nullptr;}
+// static inline char* join(const char* s1, const char* s2) { return nullptr;}
 /**
  * loadShaderFromFile
  * 
@@ -149,8 +125,8 @@ method Shader* LoadShaderFromFile(
     const GLchar *vShaderFile, 
     const GLchar *fShaderFile)
 {
-    char* vFile = join("assets/", vShaderFile);
-    char* fFile = join("assets/", fShaderFile);
+    char* vFile = Join("assets/", vShaderFile);
+    char* fFile = Join("assets/", fShaderFile);
 
     FILE* vertexShaderFile = fopen(vFile, "r");
     FILE* fragmentShaderFile = fopen(fFile, "r");
@@ -159,8 +135,8 @@ method Shader* LoadShaderFromFile(
     if (!fragmentShaderFile) SDL_Log("Unable to open %s", fShaderFile);
 
     // Read file's buffer contents into streams
-    const GLchar *vShaderCode = rdbuf(vertexShaderFile);
-    const GLchar *fShaderCode = rdbuf(fragmentShaderFile);
+    const GLchar *vShaderCode = ReadTextFile(vertexShaderFile);
+    const GLchar *fShaderCode = ReadTextFile(fragmentShaderFile);
     // close file handlers
     fclose(vertexShaderFile);
     fclose(fragmentShaderFile);

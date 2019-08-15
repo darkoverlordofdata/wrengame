@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <string.h>
-#include "core.h"
+#include "../core.h"
 
 /* 
  * Generic Hashmap implementation
@@ -156,7 +156,6 @@ constructor(Map)
     this->data = calloc(INITIAL_SIZE, sizeof(MapNode));
 	this->tableSize = INITIAL_SIZE;
 	this->length = 0;
-
     return this;
 }
 
@@ -205,9 +204,6 @@ method int Put(Map* const this, const char* key, void* value)
 	this->data[index].key = key;
 	this->data[index].inUse = 1;
 	this->length++; 
-
-    // return Right($(MAP_OK));
-
 	return MAP_OK;
 }
 
@@ -218,8 +214,6 @@ method int Put(Map* const this, const char* key, void* value)
 method int Rehash(Map* const this)
 {
     MapNode* temp = calloc(2 * this->tableSize, sizeof(MapNode));
-    //  allocate(HashmapNode, 2 * this->tableSize);
-
 	if (!temp) return MAP_OMEM;
 
 	/* Update the array */
@@ -238,7 +232,6 @@ method int Rehash(Map* const this)
             continue;
             
 		int status = Put(this, curr[i].key, curr[i].data);
-        // if (!IsRight(status)) return GetLeft(status);
 		if (status != MAP_OK)
 			return status;
 	}

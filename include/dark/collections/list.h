@@ -28,7 +28,7 @@ SOFTWARE.
 #include <assert.h>
 #include <string.h>
 #include <stdarg.h>
-#include "core.h"
+#include "../core.h"
 
 type (ListNode) {
     void* data;
